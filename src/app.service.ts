@@ -18,7 +18,6 @@ export class AppService {
 
   getHello(): string {
     const address = Address.from_base58('9hFmeUHVttZmgtq4DEosEzJb3bTjx9HMJVptmMgfaHH9tYyGYTE')
-    console.log(address.to_ergo_tree().to_base16_bytes())
     return 'Hello World!';
   }
 
@@ -69,7 +68,6 @@ export class AppService {
   async addCommitment(xpub: String, commitment: String, reducedId: String, simulated: boolean = false) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     const commitmentObj = new this.commitmentModel({commitment: commitment, reduced: reduced, xpub: xpub, simulated: simulated});
-    console.log(commitmentObj);
     return await commitmentObj.save();
   }
 

@@ -151,9 +151,7 @@ export class UtilsService {
     const proofs: PartialProof[] = await this.appService.getPartialProofs(reducedId)
 
     const signPb = await this.mergeBags(reducedId, commitments.map((c) => c.commitment));
-    console.log('here 2')
     const signHintsPr = await this.mergeBags(reducedId, proofs.map((p) => p.proof));
-    console.log('here 3')
 
     const allHints = TransactionHintsBag.empty();
     const inputNum = await this.getReducedInputLength(reducedId);
