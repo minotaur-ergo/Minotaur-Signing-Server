@@ -34,7 +34,11 @@ export class UtilsService {
   }
 
   verifySignature(addr: Address, message: Uint8Array, signature: Uint8Array) {
-    return verify_signature(addr, message, signature);
+    try {
+      return verify_signature(addr, message, signature);
+    } catch (error) {
+      return false;
+    }
   }
 
   signMessage(mnemonic: string, message: Uint8Array): Uint8Array {

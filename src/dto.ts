@@ -7,7 +7,7 @@ export class SetPkDto {
     @ApiProperty({ description: 'Extended public key', example: 'xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH' })
     xpub: string;
 
-    @ApiProperty({ description: 'signed hash of the entire body base64 encoded', example: 'fwYB5LsUGFNe41hvAGIulsMWDcOTg5gMq7kSULrzJEv7QgbIxFifunia/oBkWZqWHoZaGzw99NGGP3iBl38JFSd/+7xgrqVLB1Gl7CZZeCDwUsm3XyB3lPMHZHDxywiZZIq9ZT32UXNYdCu/ogFoN8zM5DGNOfSyBCUz0z4HV/xX2VGG8x04goJKU5afvDGLvFsqebEvldl+YnUAnYue9yL50Uv+vJ2gcZZMuzychQ+BVNCoh2f9OIvacl5UzsDwhqwg7zTqeN/IKsMEQG2KLWNL0BvIh1GdU0LhyoYCRA7n2xfzs8qhejRAwpkkbxtTyjKnX1oPCfRdL/Y6TZivaA==' })
+    @ApiProperty({ description: 'signature of pub using address 0 of wallet', example: 'fwYB5LsUGFNe41hvAGIulsMWDcOTg5gMq7kSULrzJEv7QgbIxFifunia/oBkWZqWHoZaGzw99NGGP3iBl38JFSd/+7xgrqVLB1Gl7CZZeCDwUsm3XyB3lPMHZHDxywiZZIq9ZT32UXNYdCu/ogFoN8zM5DGNOfSyBCUz0z4HV/xX2VGG8x04goJKU5afvDGLvFsqebEvldl+YnUAnYue9yL50Uv+vJ2gcZZMuzychQ+BVNCoh2f9OIvacl5UzsDwhqwg7zTqeN/IKsMEQG2KLWNL0BvIh1GdU0LhyoYCRA7n2xfzs8qhejRAwpkkbxtTyjKnX1oPCfRdL/Y6TZivaA==' })
     signature: string;
 
 }
@@ -22,7 +22,14 @@ export class CreateTeamDto {
 
     @ApiProperty({ description: 'm in (m of n)', example: 2 })
     m: number;
+
+    @ApiProperty({ description: 'signature of pub using address 0 of wallet', example: 'fwYB5LsUGFNe41hvAGIulsMWDcOTg5gMq7kSULrzJEv7QgbIxFifunia/oBkWZqWHoZaGzw99NGGP3iBl38JFSd/+7xgrqVLB1Gl7CZZeCDwUsm3XyB3lPMHZHDxywiZZIq9ZT32UXNYdCu/ogFoN8zM5DGNOfSyBCUz0z4HV/xX2VGG8x04goJKU5afvDGLvFsqebEvldl+YnUAnYue9yL50Uv+vJ2gcZZMuzychQ+BVNCoh2f9OIvacl5UzsDwhqwg7zTqeN/IKsMEQG2KLWNL0BvIh1GdU0LhyoYCRA7n2xfzs8qhejRAwpkkbxtTyjKnX1oPCfRdL/Y6TZivaA==' })
+    signature: string;
+
+    @ApiProperty({ description: 'Extended public key', example: 'xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH' })
+    xpub: string;
 }
+
 
 export class AddReducedTxDto {
     @ApiProperty({ description: 'Base64 encoding of a reduced Tx bytes', example: '5wMBL7Ullx+UtfT6T/piOn0dx8W0yCkpoXljh1EVwnQNeI4AAAAAA4CU69wDEAUEBgjNAoLYmK8tjSGMpJFevjyP5MbKoHVIUUmFhD0N3R2hVUceCM0DAT/XKB1mXbDDOotoO6k5rrNrZgWb4bRwVHPZEz78yE0IzQPCNJPc/PGKaFyC4LqjX3lCV+On75j9oux6AQZ/zpowlQjNA/GLN8R2OTy3zN2McUfbBIrH3q1Do+hPgaQcq4Unxd/WmHMAgwQIcwFzAnMDcwSqrkEAAKCigcMhEAUEBgjNAoLYmK8tjSGMpJFevjyP5MbKoHVIUUmFhD0N3R2hVUceCM0DAT/XKB1mXbDDOotoO6k5rrNrZgWb4bRwVHPZEz78yE0IzQPCNJPc/PGKaFyC4LqjX3lCV+On75j9oux6AQZ/zpowlQjNA/GLN8R2OTy3zN2McUfbBIrH3q1Do+hPgaQcq4Unxd/WmHMAgwQIcwFzAnMDcwSqrkEAAOCRQxAFBAAEAA42EAIEoAsIzQJ5vmZ++dy7rFWgYpXOhwsHApv82y3OKNlZ8oFbFvgXmOoC0ZKjmozHpwFzAHMBEAECBALRloMDAZOjjMeypXMAAAGTwrKlcwEAdHMCcwODAQjN7qyTsaVzBKquQQAAmAMEzQJx95oYGNXQ9LdemlR55nDiUxyQ5kpIvWiTSGNuUN/jHM0CfYWYxiSE43qf9Kf/In3pOVL004D5ORRP48XPfmuzMIzNAtRfgdBk7HV+lPBAhEqrzz2PDi97ccTOPYV1uyLq/gZDzQOFsMAp13eMi800aP6fKxnlta6G1y5BB1gF54dkamzfUQAA' })

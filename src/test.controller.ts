@@ -31,6 +31,16 @@ export class TestController {
     }
   }
 
+  @Post('/signBody')
+  @ApiTags('Test')
+  async signBody(@Body() body: any) {
+    const mnemonic = body.mnemonic;
+    const message = Buffer.from(JSON.stringify(body.data), 'utf-8');
+    return {
+      "signiture": this.utilService.bytesToBase64(this.utilService.signMessage(mnemonic, message))
+    }
+  }
+
   @Post('/signJson')
   @ApiTags('Test')
   async signJson(@Body() body: any) {

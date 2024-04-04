@@ -108,8 +108,21 @@ export class AppController {
   async addTeam(@Body() body: CreateTeamDto) {
     // TODO check if the user is valid
 
-    const team = await this.appService.addTeam(body);
-    return team;
+    const xpub = body.xpub;
+    const address = this.utilService.deriveAddressFromXPub(xpub);
+
+    const bodyWithoutSignature = {...body};
+    delete bodyWithoutSignature.signature;
+    const bodyBytes = Buffer.from(JSON.stringify(bodyWithoutSignature), 'utf-8');
+
+    const signature = body.signature;
+    const sigBytes = this.utilService.base64ToBytes(signature);
+    const isValid = this.utilService.verifySignature(address, bodyBytes, sigBytes);
+    if (isValid) {
+      const team = await this.appService.addTeam(body);
+      return team;
+    }
+    throw new HttpException('Invalid', 400);
   }
 
   @Post('/getTeams')
