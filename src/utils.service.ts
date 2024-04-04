@@ -114,6 +114,9 @@ export class UtilsService {
     const boxes = ErgoBoxes.empty()
     reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
 
+    const dataInputs = ErgoBoxes.empty()
+    reduced.dataInputs.forEach(item => dataInputs.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
+
     const commitmentXpubs = commitments.map((commitment: any) => commitment.xpub)
     const teamXpubs = reduced.team.xpubs;
     const toSimXpubs = teamXpubs.filter((xpub: string) => !commitmentXpubs.includes(xpub))
@@ -129,9 +132,8 @@ export class UtilsService {
       const simulated = new Propositions();
       pubs.forEach(element => simulated.add_proposition_from_byte(Buffer.from('cd' + element, "hex")));
       const signed = new Propositions();
-      // TODO fix data inputs
       // TODO fix fakeContext
-      const extracted: TransactionHintsBag = extract_hints(txSim, fakeContext(), boxes, ErgoBoxes.empty(), signed, simulated)
+      const extracted: TransactionHintsBag = extract_hints(txSim, fakeContext(), boxes, dataInputs, signed, simulated)
       const commitment = JSON.stringify(extracted.to_json());
       bags.push({
         xpub: xpub,

@@ -106,8 +106,6 @@ export class AppController {
 
   @Post('/addTeam')
   async addTeam(@Body() body: CreateTeamDto) {
-    // TODO check if the user is valid
-
     const xpub = body.xpub;
     const address = this.utilService.deriveAddressFromXPub(xpub);
 
