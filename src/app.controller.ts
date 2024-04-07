@@ -31,6 +31,10 @@ export class AppController {
   async addReducedTx(@Body() body: AddReducedTxDto) {
     await this.encryptService.validUser(body)
 
+    if (this.appService.reducedExists(body.reducedTx, body.teamId)) {
+      return {message: 'This reduced tx already exists'};
+    }
+
     const reduced = await this.appService.addReduced(body.xpub, body.pub, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
     return {message: 'Success', reducedId: reduced.id};
   }
@@ -44,6 +48,12 @@ export class AppController {
     const simulatedNum = commitments.filter((c) => !c.simulated).length
 
     const proofs = await this.appService.getPartialProofs(body.reducedId)
+    const proofXpubs = proofs.map((p) => p.xpub)
+    if (proofXpubs.includes(body.xpub)) {
+      await this.appService.updatePartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
+      return {message: 'Successlly updated proof'};
+    }
+
     if (proofs.length < simulatedNum) {
       await this.appService.addPartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
     }
@@ -61,6 +71,12 @@ export class AppController {
     const auth = await this.encryptService.validUser(body, reduced.team._id)
 
     const commitments = await this.appService.getCommitments(body.reducedId)
+    const committedXpubs = commitments.map((c) => c.xpub)
+    if (committedXpubs.includes(body.xpub)) {
+      await this.appService.updateCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
+      return {message: 'Successlly updated commitment'};
+    }
+
 
     if (commitments.length < reduced.team.m) {
       await this.appService.addCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
@@ -78,11 +94,14 @@ export class AppController {
 
     const commitments = await this.appService.getCommitments(body.reducedId)
     const bag = await this.utilService.mergeBags(body.reducedId, commitments.map((c) => c.commitment))
+    const bagXpubs = commitments.map((c) => c.xpub)
     const team = await this.appService.getTeamByReducedId(body.reducedId)
     const result = {
       commitments: bag.to_json(),
       collected: commitments.length,
-      enoughCollected: commitments.length >= team.m
+      enoughCollected: commitments.length >= team.m,
+      xpubs: bagXpubs,
+      userCommitted: bagXpubs.includes(body.xpub)
     }
     return result;
   }
@@ -106,6 +125,11 @@ export class AppController {
 
   @Post('/addTeam')
   async addTeam(@Body() body: CreateTeamDto) {
+    const teamExists = await this.appService.teamExists(body.xpubs, body.m);
+    if (teamExists) {
+      throw new HttpException('Team already exists', 400);
+    }
+
     const xpub = body.xpub;
     const address = this.utilService.deriveAddressFromXPub(xpub);
 

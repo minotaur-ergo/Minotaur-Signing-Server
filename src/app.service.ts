@@ -38,6 +38,14 @@ export class AppService {
     return await newTeam.save();
   }
 
+  async teamExists(xpubs: string[], m: number) {
+    const teamExists = await this.teamModel.findOne({ xpubs: { $size: xpubs.length, $all: xpubs }, m: m }).exec();
+    if (teamExists) {
+      return true;
+    }
+    return false;
+  }
+
   async saveTeam(team: any) {
     const newTeam = new this.teamModel(team);
     return await newTeam.save();
@@ -59,15 +67,36 @@ export class AppService {
     return await reducedObj.save();
   }
 
+  async reducedExists(reduced: string, teamId: string = "") {
+    const reducedTx = await this.reducedModel.findOne({ reduced: reduced }).exec();
+    if (reducedTx && (reducedTx.team.toString() === teamId || teamId === "")) {
+      return true;
+    }
+    return false
+  }
+
   async addPartialProof(xpub: String, proof: String, reducedId: String) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     const partialProof = new this.partialProofModel({proof: proof, reduced: reduced, xpub: xpub});
     return await partialProof.save();
   }
+
+  async updatePartialProof(xpub: string, proof: string, reducedId: string) {
+    const partialProof = await this.partialProofModel.findOne({reduced: reducedId, xpub: xpub}).exec();
+    partialProof.proof = proof;
+    return await partialProof.save();
+  }
   
-  async addCommitment(xpub: String, commitment: String, reducedId: String, simulated: boolean = false) {
+  async addCommitment(xpub: String, commitment: string, reducedId: string, simulated: boolean = false) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     const commitmentObj = new this.commitmentModel({commitment: commitment, reduced: reduced, xpub: xpub, simulated: simulated});
+    return await commitmentObj.save();
+  }
+
+  async updateCommitment(xpub: string, commitment: string, reducedId: string, simulated: boolean = false) {
+    const commitmentObj = await this.commitmentModel.findOne({reduced: reducedId, xpub: xpub}).exec();
+    commitmentObj.commitment = commitment;
+    commitmentObj.simulated = simulated;
     return await commitmentObj.save();
   }
 
