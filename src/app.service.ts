@@ -68,8 +68,9 @@ export class AppService {
   }
 
   async reducedExists(reduced: string, teamId: string = "") {
-    const reducedTx = await this.reducedModel.findOne({ reduced: reduced }).exec();
-    if (reducedTx && (reducedTx.team.toString() === teamId || teamId === "")) {
+    const reducedTx = await this.reducedModel.find({ reduced: reduced }).exec();
+    const temaIds = reducedTx.map((tx) => tx.team._id)
+    if (reducedTx && (temaIds.includes(teamId) || teamId === "")) {
       return true;
     }
     return false

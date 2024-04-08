@@ -31,7 +31,8 @@ export class AppController {
   async addReducedTx(@Body() body: AddReducedTxDto) {
     await this.encryptService.validUser(body)
 
-    if (this.appService.reducedExists(body.reducedTx, body.teamId)) {
+    const exists = await this.appService.reducedExists(body.reducedTx, body.teamId)
+    if (exists) {
       return {message: 'This reduced tx already exists'};
     }
 

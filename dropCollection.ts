@@ -6,10 +6,10 @@ const MONGODB_URI = process.env.MONGODB_URI; // Use the MONGODB_URI from your .e
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(async () => {
     const allCollections = await mongoose.connection.db.listCollections().toArray();
-    allCollections.forEach(async collection => {
-      console.log('Dropping collection:', collection.name);
-      console.log(await mongoose.connection.dropCollection(collection.name));
-    })
+    for (let i = 0; i < allCollections.length; i++) {
+      // drop the collection
+      await mongoose.connection.dropCollection(allCollections[i].name);
+    }
     // await mongoose.connection.dropCollection('teams');
     // await mongoose.connection.dropCollection('Auth');
     // await mongoose.connection.dropCollection('commitment');

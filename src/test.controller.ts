@@ -15,9 +15,9 @@ export class TestController {
   @Post('/mnemToXpub')
   @ApiTags('Test')
   async mnemToXpub(@Body() body: any) {
-    const mnemonic = body.mnemonic;
+    const xpubs = body.mnemonics.map((mnemonic: string) => this.utilService.mnemonicToXpub(mnemonic));
     return {
-      "xpub": this.utilService.mnemonicToXpub(mnemonic)
+      "xpubs": xpubs
     }
   }
 
@@ -27,7 +27,7 @@ export class TestController {
     const mnemonic = body.mnemonic;
     const message = this.utilService.base64ToBytes(body.message);
     return {
-      "signiture": this.utilService.bytesToBase64(this.utilService.signMessage(mnemonic, message))
+      "signature": this.utilService.bytesToBase64(this.utilService.signMessage(mnemonic, message))
     }
   }
 
@@ -37,7 +37,7 @@ export class TestController {
     const mnemonic = body.mnemonic;
     const message = Buffer.from(JSON.stringify(body.data), 'utf-8');
     return {
-      "signiture": this.utilService.bytesToBase64(this.utilService.signMessage(mnemonic, message))
+      "signature": this.utilService.bytesToBase64(this.utilService.signMessage(mnemonic, message))
     }
   }
 
