@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Res, Body, HttpException, Param, Query } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AddReducedTxDto, CreateTeamDto, SetPkDto, AddPartialProofDto, AddCommitmentDto, getCommitmentsDto, getReducedTxsDto, getTxDto, getTeamsDto } from './dto';
+import { AddReducedTxDto, CreateTeamDto, SetPkDto, AddPartialProofDto, AddCommitmentDto, getCommitmentsDto, getReducedTxsDto, getTxDto, getTeamsDto, getReducedStatusDto } from './dto';
 import { EncryptService } from './encryption.service';
 import { UtilsService } from './utils.service';
 
@@ -33,7 +33,7 @@ export class AppController {
 
     const exists = await this.appService.reducedExists(body.reducedTx, body.teamId)
     if (exists) {
-      return {message: 'This reduced tx already exists'};
+      throw new HttpException(`This reduced tx already exists`, 400);
     }
 
     const reduced = await this.appService.addReduced(body.xpub, body.pub, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
@@ -43,22 +43,33 @@ export class AppController {
   @Post('/addPartialProof')
   async addPartialProof(@Body() body: AddPartialProofDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    // const auth = await this.encryptService.validUser(body, reduced.team._id)
+
+    const team = await this.appService.getTeamByReducedId(body.reducedId)
 
     const commitments = await this.appService.getCommitments(body.reducedId)
-    const simulatedNum = commitments.filter((c) => !c.simulated).length
 
-    const proofs = await this.appService.getPartialProofs(body.reducedId)
+    if (commitments.length < team.xpubs.length) {
+      throw new HttpException('Not enough commitments collected not simulated', 400);
+    }
+
+    if (!(await this.utilService.isProofOkay(body.reducedId, JSON.stringify(body.proof), body.xpub))) {
+      throw new HttpException('Invalid proof', 400);
+    }
+
+
+    let proofs = await this.appService.getPartialProofs(body.reducedId)
     const proofXpubs = proofs.map((p) => p.xpub)
     if (proofXpubs.includes(body.xpub)) {
       await this.appService.updatePartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
-      return {message: 'Successlly updated proof'};
-    }
 
-    if (proofs.length < simulatedNum) {
+    } else if (proofs.length < team.m) {
       await this.appService.addPartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
     }
-    if (proofs.length + 1 >= simulatedNum) {
+
+    
+    proofs = await this.appService.getPartialProofs(body.reducedId)
+    if (proofs.length >= team.m) {
       await this.utilService.signReduced(body.reducedId, true)
     }
 
@@ -69,20 +80,22 @@ export class AppController {
   @Post('/addCommitment')
   async addCommitment(@Body() body: AddCommitmentDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    // const auth = await this.encryptService.validUser(body, reduced.team._id)
 
-    const commitments = await this.appService.getCommitments(body.reducedId)
+    const proofs = await this.appService.getPartialProofs(body.reducedId)
+    if (proofs.length > 0) {
+      throw new HttpException('Proofs are being collected', 400);
+    }
+
+    let commitments = await this.appService.getCommitments(body.reducedId)
     const committedXpubs = commitments.map((c) => c.xpub)
     if (committedXpubs.includes(body.xpub)) {
       await this.appService.updateCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
-      return {message: 'Successlly updated commitment'};
-    }
-
-
-    if (commitments.length < reduced.team.m) {
+    } else if (commitments.length < reduced.team.m) {
       await this.appService.addCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
     }
-    if (commitments.length + 1 >= reduced.team.m && commitments.length < reduced.team.xpubs.length) {
+    commitments = await this.appService.getCommitments(body.reducedId)
+    if (commitments.length >= reduced.team.m) {
       await this.utilService.getSimulationBag(body.reducedId, true)
     }
     return {message: 'Success'};
@@ -101,7 +114,7 @@ export class AppController {
       commitments: bag.to_json(),
       collected: commitments.length,
       enoughCollected: commitments.length >= team.m,
-      xpubs: bagXpubs,
+      comittedXpubs: bagXpubs,
       userCommitted: bagXpubs.includes(body.xpub)
     }
     return result;
@@ -156,5 +169,27 @@ export class AppController {
       throw new HttpException('Invalid', 400);
     }
     return await this.appService.getTeams(body.xpub);
+  }
+
+  @Post('/getReducedStatus')
+  async getReducedStatus(@Body() body: getReducedStatusDto) {
+    const reduced = await this.appService.getReduced(body.reducedId, true)
+    const auth = await this.encryptService.validUser(body, reduced.team._id)
+
+    let commitments = await this.appService.getCommitments(body.reducedId)
+    commitments = commitments.filter((c) => !c.simulated)
+
+    const comittedXpubs = commitments.map((c) => c.xpub)
+
+    const proofs = await this.appService.getPartialProofs(body.reducedId)
+    const proofXpubs = proofs.map((p) => p.xpub)
+
+    let tx = await this.appService.getTx(body.reducedId)
+
+    return {
+      comittedXpubs: comittedXpubs,
+      proofXpubs: proofXpubs,
+      tx: tx
+    }
   }
 }

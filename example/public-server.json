@@ -1,4 +1,3 @@
-
 {
     "secretHints": {
         "0": [
@@ -8,8 +7,8 @@
                     "op": "205",
                     "h": "02d45f81d064ec757e94f040844aabcf3d8f0e2f7b71c4ce3d8575bb22eafe0643"
                 },
-                "challenge": "4f8ac9c37498932e4b334ff309bd9511162975bbfc97b791",
-                "proof": "4f8ac9c37498932e4b334ff309bd9511162975bbfc97b7915cf75afaf03341323c4012e76c18047d1bde74fe00e02859aa49f2df67ce247b",
+                "challenge": "d55b06ac52a15a6d8a8ff5067cc855623313b2c54c3b0322",
+                "proof": "d55b06ac52a15a6d8a8ff5067cc855623313b2c54c3b0322ae1d13f2f1bed667dc95726c03a456d8e0dd45a66870b7bc06d3fe2f4b437d0c",
                 "position": "0-2"
             }
         ]
@@ -23,18 +22,18 @@
                     "h": "02d45f81d064ec757e94f040844aabcf3d8f0e2f7b71c4ce3d8575bb22eafe0643"
                 },
                 "type": "dlog",
-                "a": "03f99f1836a429b6aedd779a90d98a0e4abfc178b2991bc1f395a96519acfc6f8d",
+                "a": "035ea22b470229bc86a641a37e0fc46c23ae173acd93b1e42aab4debc25636f146",
                 "position": "0-2"
             },
             {
                 "hint": "cmtReal",
                 "pubkey": {
                     "op": "205",
-                    "h": "027d8598c62484e37a9ff4a7ff227de93952f4d380f939144fe3c5cf7e6bb3308c"
+                    "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
                 },
                 "type": "dlog",
-                "a": "02d066d97adeb4da4e0d0db160d351203a235cb71c2c259d44f875179b2f406363",
-                "position": "0-1"
+                "a": "0327d54b96a24f240cf5fed6b970ad9eb73dc5aac462be72b4c34c958d1118171a",
+                "position": "0-0"
             },
             {
                 "hint": "cmtReal",
@@ -50,11 +49,11 @@
                 "hint": "cmtReal",
                 "pubkey": {
                     "op": "205",
-                    "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
+                    "h": "027d8598c62484e37a9ff4a7ff227de93952f4d380f939144fe3c5cf7e6bb3308c"
                 },
                 "type": "dlog",
-                "a": "0327d54b96a24f240cf5fed6b970ad9eb73dc5aac462be72b4c34c958d1118171a",
-                "position": "0-0"
+                "a": "02d066d97adeb4da4e0d0db160d351203a235cb71c2c259d44f875179b2f406363",
+                "position": "0-1"
             }
         ]
     }

@@ -1,34 +1,6 @@
 {
     "xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH": {
-        "secretHints": {
-            "0": [
-                {
-                    "hint": "proofReal",
-                    "pubkey": {
-                        "op": "205",
-                        "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
-                    },
-                    "challenge": "42f0e313434ca54288cbe8f476d64647bfb18818ce50b352",
-                    "proof": "42f0e313434ca54288cbe8f476d64647bfb18818ce50b352028bb074d947b147b2d3cd4684d6b2e935bb9961693312512f3c409a0cb6379c",
-                    "position": "0-0"
-                }
-            ]
-        },
-        "publicHints": {
-            "0": [
-                {
-                    "hint": "cmtReal",
-                    "pubkey": {
-                        "op": "205",
-                        "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
-                    },
-                    "type": "dlog",
-                    "a": "0327d54b96a24f240cf5fed6b970ad9eb73dc5aac462be72b4c34c958d1118171a",
-                    "position": "0-0"
-                }
-            ]
-        }
-    },
+        "secretHints": xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH,
     "xpub6EGw6v6FzxbJCL1AYyirN9fPe9iH8bKowyvpbnh2qgi72y42zfvraCzbBEUDPPRJnu7gYkoqgyyRin5FRFVJviYMsNFjTiVcfDChaWHmhsk": {
         "secretHints": {
             "0": [
@@ -38,8 +10,8 @@
                         "op": "205",
                         "h": "0385b0c029d7778c8bcd3468fe9f2b19e5b5ae86d72e41075805e787646a6cdf51"
                     },
-                    "challenge": "9a39a25b378ed32c6fc6747837b58941b94c8d0e32bd3835",
-                    "proof": "9a39a25b378ed32c6fc6747837b58941b94c8d0e32bd38350d89e9fcb11d3fd449c63398023a7b253d19e66700f4556e5f5b0e7ddae04017",
+                    "challenge": "fcaebcdbb7595986ea85401481c2aed56ec74fc1aff216e3",
+                    "proof": "fcaebcdbb7595986ea85401481c2aed56ec74fc1aff216e371a448e42646c354b2a36926a991425bce907339bf245db5657073ca671ede60",
                     "position": "0-3"
                 }
             ]
@@ -68,8 +40,8 @@
                         "op": "205",
                         "h": "027d8598c62484e37a9ff4a7ff227de93952f4d380f939144fe3c5cf7e6bb3308c"
                     },
-                    "challenge": "0ab7dc2b6ff288982acf9c70b608fcba42e58bea65f43570",
-                    "proof": "0ab7dc2b6ff288982acf9c70b608fcba42e58bea65f43570e9b51321a60217cf800e14017528a949df5e956a248e4ce7d36ac8a515ac0402",
+                    "challenge": "37ca556673e9ec959ce1c9008310c65e2c8f20c401a36962",
+                    "proof": "37ca556673e9ec959ce1c9008310c65e2c8f20c401a36962818d9ca869e76325893bcc141437e394ca8dafd3c54fc590ab1829eba7d9bd73",
                     "position": "0-1"
                 }
             ]

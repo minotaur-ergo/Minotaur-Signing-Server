@@ -67,10 +67,10 @@ export class AppService {
     return await reducedObj.save();
   }
 
-  async reducedExists(reduced: string, teamId: string = "") {
+  async reducedExists(reduced: string, teamId: string = ""): Promise<any> {
     const reducedTx = await this.reducedModel.find({ reduced: reduced }).exec();
-    const temaIds = reducedTx.map((tx) => tx.team._id)
-    if (reducedTx && (temaIds.includes(teamId) || teamId === "")) {
+    const teamIds = reducedTx.map((tx) => tx.team._id.toString())
+    if (reducedTx && (teamIds.includes(teamId) || teamId === "")) {
       return true;
     }
     return false
@@ -83,6 +83,11 @@ export class AppService {
   }
 
   async updatePartialProof(xpub: string, proof: string, reducedId: string) {
+    const tx = await this.getTx(reducedId);
+    if (tx && !tx.error) {
+      throw new HttpException('Transaction is already signed', HttpStatus.BAD_REQUEST);
+    }
+
     const partialProof = await this.partialProofModel.findOne({reduced: reducedId, xpub: xpub}).exec();
     partialProof.proof = proof;
     return await partialProof.save();
@@ -101,9 +106,19 @@ export class AppService {
     return await commitmentObj.save();
   }
 
-  async addTx(tx: String, reducedId: String) {
+  async deleteCommitment(xpub: string, reducedId: string) {
+    return await this.commitmentModel.deleteOne({reduced: reducedId, xpub: xpub}).exec();
+  }
+
+  async addOrUpdateTx(tx: string, reducedId: string, error: string = "") {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
-    const txObj = new this.TxModel({tx: tx, mined: false, reduced: reduced, error: ""});
+    let txObj = await this.TxModel.findOne({reduced: reducedId}).exec();
+    if (txObj) {
+      txObj.tx = tx;
+      txObj.error = error;
+      return await txObj.save();
+    } 
+    txObj = new this.TxModel({tx: tx, mined: false, reduced: reduced, error: error});
     return await txObj.save();
   }
 
@@ -133,7 +148,7 @@ export class AppService {
   }
 
   async getTx(reducedId: String) {
-    return await this.TxModel.find({reduced: reducedId}).exec();
+    return await this.TxModel.findOne({reduced: reducedId}).exec();
   }
 
   async authExists(xpub: String, pub: String) {

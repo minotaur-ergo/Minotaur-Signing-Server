@@ -92,6 +92,11 @@ const exec = () => {
     fs.writeFileSync('proofs.json', JSON.stringify(proofs, null, 4));
     // console.log(JSON.stringify(allHints.to_json(), undefined, 4));
     const signer = wasm.Wallet.from_secrets(new wasm.SecretKeys());
+
+    const signHints = wasm.TransactionHintsBag.from_json(JSON.stringify(pb));
+    for(let inputIndex=0; inputIndex < reduced.unsigned_tx().inputs().len(); inputIndex ++){
+        allHints.add_hints_for_input(inputIndex, signHints.all_hints_for_input(inputIndex));
+    }
     const tx = signer.sign_reduced_transaction_multi(reduced, allHints)
     // console.log("=================")
     // console.log(tx.to_json())

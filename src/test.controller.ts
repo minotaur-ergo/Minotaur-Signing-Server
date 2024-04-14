@@ -46,6 +46,7 @@ export class TestController {
   async signJson(@Body() body: any) {
     const secret = Buffer.from(body.secret, 'base64');
     const data = JSON.parse(JSON.stringify(body.data));
+    delete data['signature'];
     const dataBytes = Buffer.from(JSON.stringify(data), 'utf-8');
     const signature = this.encryptService.sign(dataBytes, secret);
     data['signature'] = signature;

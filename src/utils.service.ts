@@ -108,7 +108,15 @@ export class UtilsService {
 
     const reduced = await this.appService.getReduced(reducedId, true)
     const reducedTx = ReducedTransaction.sigma_parse_bytes(Buffer.from(reduced.reduced, "base64"))
-    const commitments = await this.appService.getCommitments(reducedId)
+    let commitments = await this.appService.getCommitments(reducedId)
+
+    const simulatedCommitments = commitments.filter((c) => c.simulated)
+    for (let i = 0; i < simulatedCommitments.length; i++) {
+      await this.appService.deleteCommitment(simulatedCommitments[i].xpub, reducedId)
+    }
+
+    commitments = await this.appService.getCommitments(reducedId)
+
     const signHints = await this.mergeBags(reducedId, commitments.map((c) => c.commitment));
 
     const boxes = ErgoBoxes.empty()
@@ -132,6 +140,7 @@ export class UtilsService {
       const simulated = new Propositions();
       pubs.forEach(element => simulated.add_proposition_from_byte(Buffer.from('cd' + element, "hex")));
       const signed = new Propositions();
+
       // TODO fix fakeContext
       const extracted: TransactionHintsBag = extract_hints(txSim, fakeContext(), boxes, dataInputs, signed, simulated)
       const commitment = JSON.stringify(extracted.to_json());
@@ -146,6 +155,73 @@ export class UtilsService {
     }
 
     return bags;
+  }
+
+  async isProofOkay(reducedId: string, hint: string, xpub: string): Promise<boolean> {
+      const wallet = this.getEmptyWallet();
+
+
+      const commitments = await this.appService.getCommitments(reducedId)
+      const signPb = await this.mergeBags(reducedId, commitments.map((c) => c.commitment));
+
+      const inputNum = await this.getReducedInputLength(reducedId);
+
+      const hintJson = JSON.parse(hint)
+      const relevantCommitment = commitments.find((c) => c.xpub === xpub)
+      if (!relevantCommitment) {
+        return false
+      }
+
+      const commitmentJs = JSON.parse(relevantCommitment.commitment)
+      let pk = null
+      const signed = new Propositions();
+      for (let i = 0; i < inputNum; i++) {
+        const hintA = hintJson['publicHints'][i.toString()][0]['a']
+        const hintH = hintJson['secretHints'][i.toString()][0]['pubkey']['h']
+
+        const commitmentA = commitmentJs['publicHints'][i.toString()][0]['a']
+        const commitmentH = commitmentJs['publicHints'][i.toString()][0]['pubkey']['h']
+        pk = commitmentH
+
+        if (hintA !== commitmentA || hintH !== commitmentH) {
+          return false
+        }
+        // TODO check challenge
+      }
+      return true
+
+    //   const reduced = await this.appService.getReduced(reducedId, true)
+    //   const reducedTx = ReducedTransaction.sigma_parse_bytes(Buffer.from(reduced.reduced, "base64"))
+
+
+    //   const singHintsPr = await this.mergeBags(reducedId, [hint]);
+
+    //   const allHints = TransactionHintsBag.empty();
+
+    //   const boxes = ErgoBoxes.empty()
+    //   reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
+    //   const dataInputs = ErgoBoxes.empty()
+    //   reduced.dataInputs.forEach(item => dataInputs.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
+    //   const simulated = new Propositions();
+    //   signed.add_proposition_from_byte(Buffer.from('cd' + pk, "hex"));
+      
+
+    //   for (let i = 0; i < inputNum; i++) {
+    //     allHints.add_hints_for_input(i, signPb.all_hints_for_input(i));
+    //     allHints.add_hints_for_input(i, singHintsPr.all_hints_for_input(i));
+    //   }
+
+    //   const tx = wallet.sign_reduced_transaction_multi(reducedTx, allHints);
+    //   const extracted = extract_hints(tx, fakeContext(), boxes, dataInputs, signed, simulated)
+    //   const rproof = JSON.stringify(extracted.to_json())
+    //   console.log(hint)
+    //   console.log(rproof)
+    // try {
+    // console.log(verify_tx_input_proof(0, fakeContext(), tx, boxes, ErgoBoxes.empty()))
+    //   return true
+    // } catch (error) {
+    //   return false
+    // }
   }
 
   async signReduced(reducedId: string, save: boolean = false): Promise<any> {
@@ -167,17 +243,29 @@ export class UtilsService {
       allHints.add_hints_for_input(i, signHintsPr.all_hints_for_input(i));
     }
 
-    const tx = wallet.sign_reduced_transaction_multi(reducedTx, allHints);
-    const boxes = ErgoBoxes.empty()
-    reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
-    console.log(verify_tx_input_proof(0, fakeContext(), tx, boxes, ErgoBoxes.empty()))
+    let message = ''
+    try {
+      const tx = wallet.sign_reduced_transaction_multi(reducedTx, allHints);
 
+      const boxes = ErgoBoxes.empty()
+      reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
 
-    if (save) {
-      await this.appService.addTx(tx.to_json(), reducedId)
+      for (let i = 0; i < inputNum; i++) {
+        console.log(i, verify_tx_input_proof(i, fakeContext(), tx, boxes, ErgoBoxes.empty()))
+        if (!verify_tx_input_proof(i, fakeContext(), tx, boxes, ErgoBoxes.empty())) {
+          message = 'Proof verification failed for input ' + i.toString()
+        }
+      }
+
+      if (save) {
+        await this.appService.addOrUpdateTx(tx.to_json(), reducedId, message)
+      }
+
+      return JSON.parse(tx.to_json());
+    } catch (error) {
+      message = error.message
     }
 
-    return JSON.parse(tx.to_json());
   }
 }
 
