@@ -1,0 +1,1 @@
+{"secretHints":{"0":[]},"publicHints":{"0":[{"hint":"cmtWithSecret","pubkey":{"op":"205","h":"02951adaa75f9b500055d4fc7aeabbc00807564cd2e8a7e57fa395fc030c2bdf0d"},"secret":"96257e482df603e40e44c8e21b5d2069112cb2dfb886e94bcedcf34f8f9b5347","type":"dlog","a":"02dedd423cab26a2b4d1932c065102a6fb34b70ffbbd7463c17319539c8fc041e8","position":"0-1"}]}}

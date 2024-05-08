@@ -43,7 +43,7 @@ export class AppController {
   @Post('/addPartialProof')
   async addPartialProof(@Body() body: AddPartialProofDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    // const auth = await this.encryptService.validUser(body, reduced.team._id)
+    const auth = await this.encryptService.validUser(body, reduced.team._id)
 
     const team = await this.appService.getTeamByReducedId(body.reducedId)
 
@@ -80,7 +80,7 @@ export class AppController {
   @Post('/addCommitment')
   async addCommitment(@Body() body: AddCommitmentDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    // const auth = await this.encryptService.validUser(body, reduced.team._id)
+    const auth = await this.encryptService.validUser(body, reduced.team._id)
 
     const proofs = await this.appService.getPartialProofs(body.reducedId)
     if (proofs.length > 0) {

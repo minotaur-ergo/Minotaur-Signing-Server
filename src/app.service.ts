@@ -1,24 +1,28 @@
 import { Model } from 'mongoose';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Address, verify_signature } from 'ergo-lib-wasm-nodejs';
+import { Address, BlockHeader, BlockHeaders, ErgoStateContext, PreHeader, verify_signature } from 'ergo-lib-wasm-nodejs';
 import { UtilsService } from './utils.service';
 import { Reduced, Tx, PartialProof, Commitment, Auth, Team } from './interfaces';
-
+import axios from 'axios';
 
 @Injectable()
 export class AppService {
+  private client: any;
   constructor(@InjectModel('Team') private teamModel: Model<Team>,
       @InjectModel('Auth') private authModel: Model<Auth>,
       @InjectModel('Reduced') private reducedModel: Model<Reduced>,
       @InjectModel('PartialProof') private partialProofModel: Model<PartialProof>,
       @InjectModel('Commitment') private commitmentModel: Model<Commitment>,
       @InjectModel('Tx') private TxModel: Model<Tx>
-  ) {}
+  ) {
 
-  getHello(): string {
-    const address = Address.from_base58('9hFmeUHVttZmgtq4DEosEzJb3bTjx9HMJVptmMgfaHH9tYyGYTE')
-    return 'Hello World!';
+    this.client = axios.create({
+      baseURL: process.env.NODE_URL,
+      timeout: 1000,
+      headers: {'Content-Type': 'application/json'}
+    });
+
   }
 
   async getTeams(xpub: string = "") {
@@ -161,6 +165,17 @@ export class AppService {
 
   async getAuth(xpub: String, pub: String) {
     return await this.authModel.findOne({xpub: xpub, pub: pub}).exec();
+  }
+
+  async getContext() {
+    const res = await this.client.get('/blocks/lastHeaders/10');
+    let headers = res.data;
+    headers = headers.map((header: any) => JSON.stringify(header));
+    const blockHeaders = BlockHeaders.from_json(headers);
+    const preHeader = PreHeader.from_block_header(
+      BlockHeader.from_json(headers[0]),
+    );
+    return new ErgoStateContext(preHeader, blockHeaders);
   }
 
 }

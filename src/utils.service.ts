@@ -7,7 +7,6 @@ import { createHash } from 'crypto';
 import { mnemonicToSeedSync } from 'bip39';
 import { EncryptService } from './encryption.service';
 import { AppService } from './app.service';
-import fakeContext from 'example/multiSig/fakeContext';
 import { PartialProof } from './interfaces';
 
 
@@ -141,8 +140,8 @@ export class UtilsService {
       pubs.forEach(element => simulated.add_proposition_from_byte(Buffer.from('cd' + element, "hex")));
       const signed = new Propositions();
 
-      // TODO fix fakeContext
-      const extracted: TransactionHintsBag = extract_hints(txSim, fakeContext(), boxes, dataInputs, signed, simulated)
+      const context = await this.appService.getContext();
+      const extracted: TransactionHintsBag = extract_hints(txSim, context, boxes, dataInputs, signed, simulated)
       const commitment = JSON.stringify(extracted.to_json());
       bags.push({
         xpub: xpub,
@@ -186,42 +185,8 @@ export class UtilsService {
         if (hintA !== commitmentA || hintH !== commitmentH) {
           return false
         }
-        // TODO check challenge
       }
       return true
-
-    //   const reduced = await this.appService.getReduced(reducedId, true)
-    //   const reducedTx = ReducedTransaction.sigma_parse_bytes(Buffer.from(reduced.reduced, "base64"))
-
-
-    //   const singHintsPr = await this.mergeBags(reducedId, [hint]);
-
-    //   const allHints = TransactionHintsBag.empty();
-
-    //   const boxes = ErgoBoxes.empty()
-    //   reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
-    //   const dataInputs = ErgoBoxes.empty()
-    //   reduced.dataInputs.forEach(item => dataInputs.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
-    //   const simulated = new Propositions();
-    //   signed.add_proposition_from_byte(Buffer.from('cd' + pk, "hex"));
-      
-
-    //   for (let i = 0; i < inputNum; i++) {
-    //     allHints.add_hints_for_input(i, signPb.all_hints_for_input(i));
-    //     allHints.add_hints_for_input(i, singHintsPr.all_hints_for_input(i));
-    //   }
-
-    //   const tx = wallet.sign_reduced_transaction_multi(reducedTx, allHints);
-    //   const extracted = extract_hints(tx, fakeContext(), boxes, dataInputs, signed, simulated)
-    //   const rproof = JSON.stringify(extracted.to_json())
-    //   console.log(hint)
-    //   console.log(rproof)
-    // try {
-    // console.log(verify_tx_input_proof(0, fakeContext(), tx, boxes, ErgoBoxes.empty()))
-    //   return true
-    // } catch (error) {
-    //   return false
-    // }
   }
 
   async signReduced(reducedId: string, save: boolean = false): Promise<any> {
@@ -250,9 +215,11 @@ export class UtilsService {
       const boxes = ErgoBoxes.empty()
       reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
 
+      const context = await this.appService.getContext();
+
       for (let i = 0; i < inputNum; i++) {
-        console.log(i, verify_tx_input_proof(i, fakeContext(), tx, boxes, ErgoBoxes.empty()))
-        if (!verify_tx_input_proof(i, fakeContext(), tx, boxes, ErgoBoxes.empty())) {
+        console.log(i, verify_tx_input_proof(i, context, tx, boxes, ErgoBoxes.empty()))
+        if (!verify_tx_input_proof(i, context, tx, boxes, ErgoBoxes.empty())) {
           message = 'Proof verification failed for input ' + i.toString()
         }
       }

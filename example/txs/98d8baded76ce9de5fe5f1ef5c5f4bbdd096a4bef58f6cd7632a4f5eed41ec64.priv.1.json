@@ -1,0 +1,22 @@
+{
+    "secretHints": {
+      "0": [
+        
+      ]
+    },
+    "publicHints": {
+      "0": [
+        {
+          "hint": "cmtWithSecret",
+          "pubkey": {
+            "op": "205",
+            "h": "03f18b37c476393cb7ccdd8c7147db048ac7dead43a3e84f81a41cab8527c5dfd6"
+          },
+          "secret": "16f7ccd3430ab146088f60a54fb4f40ef53ac8a3c8a1d847668cce898fac0ab5",
+          "type": "dlog",
+          "a": "039f83c340318f30966890a52fbb3e78f913910dbb2b4c8d85c0409d89eee437c9",
+          "position": "0-3"
+        }
+      ]
+    }
+  }
