@@ -157,15 +157,12 @@ export class UtilsService {
     const commitmentXpubs = commitments.map((commitment: any) => commitment.xpub)
     const teamXpubs = reduced.team.xpubs;
     const toSimXpubs = teamXpubs.filter((xpub: string) => !commitmentXpubs.includes(xpub))
-    const proofAddresses = this.getProofAddresses(commitments.filter((c) => !c.simulated).map((c) => c.commitment))
 
     const bags = []
-    for (let i = 0; i < reduced.addresses.length; i++) {
-      const xpub = reduced.team.xpubs[i];
-      const addresses = [reduced.addresses[i]];
-      if (proofAddresses.includes(addresses[0])) {
-        continue
-      }
+    const maxDerived = reduced.maxDerived;
+    for (let i = 0; i < toSimXpubs.length; i++) {
+      const xpub = toSimXpubs[i];
+      const addresses = Array.from({length: maxDerived}, (_, i) => i).map((index) => this.deriveAddressFromXPub(xpub, index).to_base58(NetworkPrefix.Mainnet))
       const pubs = addresses.map((address: string) => Buffer.from(Address.from_base58(address).content_bytes()).toString("hex"))
 
       const txSim = wallet.sign_reduced_transaction_multi(reducedTx, signHints);

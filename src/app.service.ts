@@ -64,10 +64,10 @@ export class AppService {
     return await newAuth.save();
   }
 
-  async addReduced(xpub: string, pub: string, addresses: string[], reduced: string, teamId: string, boxes = [], dataInputs = []) {
+  async addReduced(xpub: string, pub: string, maxDerived: number, reduced: string, teamId: string, boxes = [], dataInputs = []) {
     const team = await this.teamModel.findOne({ _id: teamId }).exec();
     const auth = await this.authModel.findOne({ xpub: xpub, pub: pub }).exec();
-    const reducedObj = new this.reducedModel({ reduced: reduced, team: team, proposer: auth, boxes: boxes, dataInputs: dataInputs, addresses: addresses });
+    const reducedObj = new this.reducedModel({ reduced: reduced, team: team, proposer: auth, boxes: boxes, dataInputs: dataInputs, maxDerived: maxDerived });
     return await reducedObj.save();
   }
 

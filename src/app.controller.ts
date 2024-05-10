@@ -37,7 +37,7 @@ export class AppController {
       throw new HttpException(`This reduced tx already exists`, 400);
     }
 
-    const reduced = await this.appService.addReduced(body.xpub, body.pub, body.addresses, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
+    const reduced = await this.appService.addReduced(body.xpub, body.pub, body.maxDerived, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
     return {message: 'Success', reducedId: reduced.id};
   }
    
