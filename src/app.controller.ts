@@ -3,11 +3,12 @@ import { AppService } from './app.service';
 import { AddReducedTxDto, CreateTeamDto, SetPkDto, AddPartialProofDto, AddCommitmentDto, getCommitmentsDto, getReducedTxsDto, getTxDto, getTeamsDto, getReducedStatusDto } from './dto';
 import { EncryptService } from './encryption.service';
 import { UtilsService } from './utils.service';
+import { NodeService } from './node.service';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService, private readonly encryptService: EncryptService,
-    private utilService: UtilsService) {}
+    private utilService: UtilsService, private nodeService: NodeService) {}
 
   @Post('/addPk')
   async addPk(@Body() body: SetPkDto) {
@@ -36,7 +37,7 @@ export class AppController {
       throw new HttpException(`This reduced tx already exists`, 400);
     }
 
-    const reduced = await this.appService.addReduced(body.xpub, body.pub, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
+    const reduced = await this.appService.addReduced(body.xpub, body.pub, body.addresses, body.reducedTx, body.teamId, body.inputBoxes, body.dataInputs)
     return {message: 'Success', reducedId: reduced.id};
   }
    
@@ -70,7 +71,7 @@ export class AppController {
     
     proofs = await this.appService.getPartialProofs(body.reducedId)
     if (proofs.length >= team.m) {
-      await this.utilService.signReduced(body.reducedId, true)
+      const tx = await this.utilService.signReduced(body.reducedId, true)
     }
 
     return {message: 'Success'};
@@ -114,7 +115,7 @@ export class AppController {
       commitments: bag.to_json(),
       collected: commitments.length,
       enoughCollected: commitments.length >= team.m,
-      comittedXpubs: bagXpubs,
+      committedXpubs: bagXpubs,
       userCommitted: bagXpubs.includes(body.xpub)
     }
     return result;
@@ -179,7 +180,7 @@ export class AppController {
     let commitments = await this.appService.getCommitments(body.reducedId)
     commitments = commitments.filter((c) => !c.simulated)
 
-    const comittedXpubs = commitments.map((c) => c.xpub)
+    const committedXpubs = commitments.map((c) => c.xpub)
 
     const proofs = await this.appService.getPartialProofs(body.reducedId)
     const proofXpubs = proofs.map((p) => p.xpub)
@@ -187,7 +188,7 @@ export class AppController {
     let tx = await this.appService.getTx(body.reducedId)
 
     return {
-      comittedXpubs: comittedXpubs,
+      committedXpubs: committedXpubs,
       proofXpubs: proofXpubs,
       tx: tx
     }

@@ -8,11 +8,13 @@ import { mnemonicToSeedSync } from 'bip39';
 import { EncryptService } from './encryption.service';
 import { AppService } from './app.service';
 import { PartialProof } from './interfaces';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { NodeService } from './node.service';
 
 
 @Injectable()
 export class UtilsService {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService, private nodeService: NodeService) {}
 
   private bip32 = BIP32Factory(ecc);
   private RootPathWithoutIndex = "m/44'/429'/0'/0";
@@ -30,6 +32,10 @@ export class UtilsService {
     return Address.from_public_key(
       Uint8Array.from(derived.publicKey),
     );
+  }
+
+  pubToAddress(pub: Uint8Array): Address {
+    return Address.from_public_key(pub);
   }
 
   verifySignature(addr: Address, message: Uint8Array, signature: Uint8Array) {
@@ -102,6 +108,30 @@ export class UtilsService {
     return Wallet.from_secrets(new SecretKeys())
   }
 
+  getProofAddresses(proofs: any): string[] {
+    let proofAddresses = []
+    for (let i = 0; i < proofs.length; i++) {
+      const proof = proofs[i]
+      const proofJson = JSON.parse(proof)
+      const hintKeys = ['publicHints', 'secretHints']
+      hintKeys.forEach((key) => {
+        const publicHints = proofJson[key]
+        const keys = Object.keys(publicHints)
+        keys.forEach((key) => {
+          const keyLen = publicHints[key].length
+          for (let j = 0; j < keyLen; j++) {
+            const hint = publicHints[key][j]
+            const pubkey = hint['pubkey']['h']
+            const address = Address.from_public_key(Buffer.from(pubkey, "hex"))
+            proofAddresses.push(address.to_base58(NetworkPrefix.Mainnet))
+          }
+        })
+      })
+    }
+    const uniqueAddresses = [...new Set(proofAddresses)];
+    return uniqueAddresses
+  }
+
   async getSimulationBag(reducedId: string, save: boolean = false): Promise<any> {
     const wallet = this.getEmptyWallet();
 
@@ -127,20 +157,23 @@ export class UtilsService {
     const commitmentXpubs = commitments.map((commitment: any) => commitment.xpub)
     const teamXpubs = reduced.team.xpubs;
     const toSimXpubs = teamXpubs.filter((xpub: string) => !commitmentXpubs.includes(xpub))
+    const proofAddresses = this.getProofAddresses(commitments.filter((c) => !c.simulated).map((c) => c.commitment))
 
     const bags = []
-    for (let i = 0; i < toSimXpubs.length; i++) {
-      const xpub = toSimXpubs[i];
-
-      // TODO fix this
-      const pubs = Array.from({length: 10}, (_, i) => this.deriveAddressFromXPub(xpub, i)).map((address: Address) => Buffer.from(address.content_bytes()).toString("hex"))
+    for (let i = 0; i < reduced.addresses.length; i++) {
+      const xpub = reduced.team.xpubs[i];
+      const addresses = [reduced.addresses[i]];
+      if (proofAddresses.includes(addresses[0])) {
+        continue
+      }
+      const pubs = addresses.map((address: string) => Buffer.from(Address.from_base58(address).content_bytes()).toString("hex"))
 
       const txSim = wallet.sign_reduced_transaction_multi(reducedTx, signHints);
       const simulated = new Propositions();
       pubs.forEach(element => simulated.add_proposition_from_byte(Buffer.from('cd' + element, "hex")));
       const signed = new Propositions();
 
-      const context = await this.appService.getContext();
+      const context = await this.nodeService.getContext();
       const extracted: TransactionHintsBag = extract_hints(txSim, context, boxes, dataInputs, signed, simulated)
       const commitment = JSON.stringify(extracted.to_json());
       bags.push({
@@ -195,13 +228,14 @@ export class UtilsService {
     const reduced = await this.appService.getReduced(reducedId, true)
     const reducedTx = ReducedTransaction.sigma_parse_bytes(Buffer.from(reduced.reduced, "base64"))
     const commitments = await this.appService.getCommitments(reducedId)
+    const inputNum = await this.getReducedInputLength(reducedId);
+
     const proofs: PartialProof[] = await this.appService.getPartialProofs(reducedId)
 
     const signPb = await this.mergeBags(reducedId, commitments.map((c) => c.commitment));
     const signHintsPr = await this.mergeBags(reducedId, proofs.map((p) => p.proof));
 
     const allHints = TransactionHintsBag.empty();
-    const inputNum = await this.getReducedInputLength(reducedId);
 
     for (let i = 0; i < inputNum; i++) {
       allHints.add_hints_for_input(i, signPb.all_hints_for_input(i));
@@ -215,7 +249,7 @@ export class UtilsService {
       const boxes = ErgoBoxes.empty()
       reduced.boxes.forEach(item => boxes.add(ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
 
-      const context = await this.appService.getContext();
+      const context = await this.nodeService.getContext();
 
       for (let i = 0; i < inputNum; i++) {
         console.log(i, verify_tx_input_proof(i, context, tx, boxes, ErgoBoxes.empty()))
@@ -233,6 +267,27 @@ export class UtilsService {
       message = error.message
     }
 
+  }
+
+  @Cron('*/60 * * * * *')
+  async handleCron() {
+    const txs = await this.appService.getUnconfimrdTxs();
+    txs.forEach(async (tx: any) => {
+      const txJson = JSON.parse(tx.tx)
+      const txId = txJson['id']
+      const numConfs = await this.nodeService.getTxConfirmationNum(txId)
+      if (numConfs > 0) {
+        await this.appService.addOrUpdateTx(tx.tx, tx.reduced, '', true)
+      } else {
+        try {
+          const res = await this.nodeService.broadcastTx(txJson)
+
+        } catch (error) {
+          const res = error.response.data
+          await this.appService.addOrUpdateTx(tx.tx, tx.reduced, JSON.stringify(res), false)
+        }
+      }
+    })
   }
 }
 

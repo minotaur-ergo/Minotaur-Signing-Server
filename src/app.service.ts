@@ -64,10 +64,10 @@ export class AppService {
     return await newAuth.save();
   }
 
-  async addReduced(xpub: string, pub: string, reduced: string, teamId: string, boxes = [], dataInputs = []) {
+  async addReduced(xpub: string, pub: string, addresses: string[], reduced: string, teamId: string, boxes = [], dataInputs = []) {
     const team = await this.teamModel.findOne({ _id: teamId }).exec();
     const auth = await this.authModel.findOne({ xpub: xpub, pub: pub }).exec();
-    const reducedObj = new this.reducedModel({ reduced: reduced, team: team, proposer: auth, boxes: boxes, dataInputs: dataInputs });
+    const reducedObj = new this.reducedModel({ reduced: reduced, team: team, proposer: auth, boxes: boxes, dataInputs: dataInputs, addresses: addresses });
     return await reducedObj.save();
   }
 
@@ -114,15 +114,16 @@ export class AppService {
     return await this.commitmentModel.deleteOne({reduced: reducedId, xpub: xpub}).exec();
   }
 
-  async addOrUpdateTx(tx: string, reducedId: string, error: string = "") {
+  async addOrUpdateTx(tx: string, reducedId: string, error: string = "", mined: boolean = false) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     let txObj = await this.TxModel.findOne({reduced: reducedId}).exec();
     if (txObj) {
       txObj.tx = tx;
       txObj.error = error;
+      txObj.mined = mined;
       return await txObj.save();
     } 
-    txObj = new this.TxModel({tx: tx, mined: false, reduced: reduced, error: error});
+    txObj = new this.TxModel({tx: tx, reduced: reduced, error: error, mined: mined});
     return await txObj.save();
   }
 
@@ -133,12 +134,15 @@ export class AppService {
     return await this.reducedModel.findOne({_id: reducedId}).exec();
   }
 
+  async getUnconfimrdTxs() {
+    return await this.TxModel.find({mined: false}).exec();
+  }
+
   async getReducedsByTeam(teamId: String) {
     return await this.reducedModel.find({team: teamId}).exec();
   }
 
   async getTeamByReducedId(reducedId: String) {
-    // get reduced and populate team
     const reduced = await this.reducedModel.findOne({_id: reducedId}).populate('team').exec();
     return reduced.team;
   }
@@ -165,17 +169,6 @@ export class AppService {
 
   async getAuth(xpub: String, pub: String) {
     return await this.authModel.findOne({xpub: xpub, pub: pub}).exec();
-  }
-
-  async getContext() {
-    const res = await this.client.get('/blocks/lastHeaders/10');
-    let headers = res.data;
-    headers = headers.map((header: any) => JSON.stringify(header));
-    const blockHeaders = BlockHeaders.from_json(headers);
-    const preHeader = PreHeader.from_block_header(
-      BlockHeader.from_json(headers[0]),
-    );
-    return new ErgoStateContext(preHeader, blockHeaders);
   }
 
 }

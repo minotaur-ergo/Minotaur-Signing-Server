@@ -21,6 +21,28 @@ export class TestController {
     }
   }
 
+  @Post('/xpubToPub')
+  @ApiTags('Test')
+  async xpubToPub(@Body() body: any) {
+    const xpub = body.xpub;
+    const pub = this.utilService.deriveAddressFromXPub(xpub);
+
+    return {
+      "pub": pub.to_base58(NetworkPrefix.Mainnet)
+    }
+  }
+
+  @Post('/pubToAddress')
+  @ApiTags('Test')
+  async pubToAddress(@Body() body: any) {
+    const pub = Buffer.from(body.pub, 'hex');
+    const address = this.utilService.pubToAddress(pub).to_base58(NetworkPrefix.Mainnet);
+
+    return {
+      "address": address
+    }
+  }
+
   @Post('/signMessage')
   @ApiTags('Test')
   async signMessage(@Body() body: any) {

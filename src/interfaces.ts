@@ -15,6 +15,7 @@ export interface Reduced extends mongoose.Document {
   reduced: string;
   boxes: [string];
   dataInputs: [string]
+  addresses: [string];
   team: Team['_id'];
   proposer: Auth['_id'];
 }

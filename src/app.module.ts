@@ -7,9 +7,12 @@ import { EncryptService } from './encryption.service';
 import { AuthSchema, CommitmentSchema, PartiallProofSchema, ReducedSchema, TeamSchema, TxSchema } from './schema';
 import { UtilsService } from './utils.service';
 import { TestController } from './test.controller';
+import { NodeService } from './node.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     MongooseModule.forFeature([
@@ -23,7 +26,7 @@ import { TestController } from './test.controller';
 
   ],
   controllers: [AppController, TestController],
-  providers: [AppService, EncryptService, UtilsService],
+  providers: [AppService, EncryptService, UtilsService, NodeService],
 })
 export class AppModule {}
 

@@ -15,6 +15,8 @@ export const ReducedSchema = new mongoose.Schema({
     reduced: { type: String, required: true },
     boxes: [{ type: String }],
     dataInputs: [{ type: String }],
+    addresses: [{ type: String }],
+
     team: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Team', 

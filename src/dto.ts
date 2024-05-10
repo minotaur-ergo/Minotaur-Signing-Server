@@ -50,6 +50,9 @@ export class AddReducedTxDto {
     @ApiProperty({ description: 'dataInput boxes base64 encoded', example: '["gMivoCUQBQQGCM0CcfeaGBjV0PS3XppUeeZw4lMckOZKSL1ok0hjblDf4xwIzQJ9hZjGJITjep/0p/8ifek5UvTTgPk5FE/jxc9+a7MwjAjNAtRfgdBk7HV+lPBAhEqrzz2PDi97ccTOPYV1uyLq/gZDCM0DhbDAKdd3jIvNNGj+nysZ5bWuhtcuQQdYBeeHZGps31GYcwCDBAhzAXMCcwNzBIrxLQAAkIe+Zp9j6RfrubmUWvd3vOmGoFVvnlScFq4qw3D7gS8A"]' })
     dataInputs: [string];
 
+    @ApiProperty({ description: 'addresses of participants - will be used for simulation', example: '["9gE9WmtpVgr4zDddn8RcDE6fmsyhqhMwbDUDAMQcrTFEG1ijXg2"]' })
+    addresses: [string];
+
     @ApiProperty({ description: 'signed hash of the entire body base64 encoded', example: 'fwYB5LsUGFNe41hvAGIulsMWDcOTg5gMq7kSULrzJEv7QgbIxFifunia/oBkWZqWHoZaGzw99NGGP3iBl38JFSd/+7xgrqVLB1Gl7CZZeCDwUsm3XyB3lPMHZHDxywiZZIq9ZT32UXNYdCu/ogFoN8zM5DGNOfSyBCUz0z4HV/xX2VGG8x04goJKU5afvDGLvFsqebEvldl+YnUAnYue9yL50Uv+vJ2gcZZMuzychQ+BVNCoh2f9OIvacl5UzsDwhqwg7zTqeN/IKsMEQG2KLWNL0BvIh1GdU0LhyoYCRA7n2xfzs8qhejRAwpkkbxtTyjKnX1oPCfRdL/Y6TZivaA==' })
     signature: string;
 
