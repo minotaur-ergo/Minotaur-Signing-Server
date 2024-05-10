@@ -32,6 +32,7 @@ const mnemonicToWallet = (mnemonic: string, addressCount: number) => {
         const secret = wasm.SecretKey.dlog_from_bytes(
            extended.privateKey ? extended.privateKey : Buffer.from(''),
         );
+        console.log(secret.get_address().to_base58(wasm.NetworkPrefix.Mainnet));
         pubs.push(Buffer.from(secret.get_address().content_bytes()).toString("hex"));
         secrets.add(secret);
     }
@@ -55,7 +56,23 @@ const exec = () => {
     const boxes = wasm.ErgoBoxes.empty()
     boxesBase64.forEach(item => boxes.add(wasm.ErgoBox.sigma_parse_bytes(Buffer.from(item, "base64"))))
     const wallets = mnemonics.map(item => mnemonicToWallet(item, 3));
+    // console.log(wallets)
     const reduced = wasm.ReducedTransaction.sigma_parse_bytes(Buffer.from(reducedBase64, "base64"))
+    const addresses = [
+        "9fWgoVvkRgCVcXifR3K3B5yrMmQLWpUbty1Ktx547RrQWRFxmuM",
+        "9fPFetX45carKACznfytrBrkTwwhfgmTLcV5NdFsLqNbZ35xBRT",
+        "9fejCXXkJkj7fWa6TLDzPsskgBwnP4EcSmnsgXpA9QgkRGuYs2k",
+        "9iJBbzXeXyUoWEhgtq4DHTA9KDv4J8igGfzUY3kSH4S7o3avr13",
+        "9hUgdjMGHUAZ23niJHboju9Zboi7fC151n2rM5RMWC2D1rzsd8c",
+        "9fzyjYNC7QCqEojeHdYx1iprPZKSC7ZUb8DnhD6sPeSaoCo26GR",
+        "9hwLQaEmSZtsdcPcfE7FX5HbJoRyRJ299VdUscpcfwndbd7PUg5",
+        "9fULoVyFsjETH2mfEn2b89mssKsQMxcKYyvADeqK1q8N5nZ4nQg",
+        "9evaJNDSZcpKDRYSj9rcQHcBczz1Z5Fo5WKaup3tpTaz4mkzh6y",
+        "9gUMc3mwUSGNSBAqfNrbfoaCuvsL3aaHk46D5HpfJjUdmk9F4kr",
+        "9g8bJN4Lqce3HTQNkqMb6j974u72gRLH7KCh49UukgmohWhvgS5",
+        "9gGZMQmPLxdwvAJ23osbrgVTgT5nLYa2AMre5US5oBraqSf6kM4"
+    ]
+
     
     const publicData = {}
     const privateData = {}

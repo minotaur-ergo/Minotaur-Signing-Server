@@ -1,6 +1,34 @@
 {
     "xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH": {
-        "secretHints": xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH,
+        "secretHints": {
+            "0": [
+                {
+                    "hint": "proofReal",
+                    "pubkey": {
+                        "op": "205",
+                        "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
+                    },
+                    "challenge": "1178a1381131369ca7538d0a8279721b0d2b97c6d60bd6a2",
+                    "proof": "1178a1381131369ca7538d0a8279721b0d2b97c6d60bd6a2d21e81eef333eeb1a5e244651925580f969a3d7d89f5a0c610080347ca606adf",
+                    "position": "0-0"
+                }
+            ]
+        },
+        "publicHints": {
+            "0": [
+                {
+                    "hint": "cmtReal",
+                    "pubkey": {
+                        "op": "205",
+                        "h": "0271f79a1818d5d0f4b75e9a5479e670e2531c90e64a48bd689348636e50dfe31c"
+                    },
+                    "type": "dlog",
+                    "a": "0327d54b96a24f240cf5fed6b970ad9eb73dc5aac462be72b4c34c958d1118171a",
+                    "position": "0-0"
+                }
+            ]
+        }
+    },
     "xpub6EGw6v6FzxbJCL1AYyirN9fPe9iH8bKowyvpbnh2qgi72y42zfvraCzbBEUDPPRJnu7gYkoqgyyRin5FRFVJviYMsNFjTiVcfDChaWHmhsk": {
         "secretHints": {
             "0": [

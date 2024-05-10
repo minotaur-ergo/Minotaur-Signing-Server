@@ -278,14 +278,14 @@ const addPartialProof = async (index: number, tx_id: string, hints: HintBag) => 
         reducedId: tx_id,
         proof: extracted.to_json()
     }
-    if (index === 0)
-        console.log(JSON.stringify(data, undefined, 4))
     const signature = signWithPk(index, Buffer.from(JSON.stringify(data)))
     try{
         const res = await instance.post("addPartialProof", {...data, signature})
         // console.log(res.data)
     }catch(exp){
         // console.log(exp)
+        // throw new Error("unhandled", exp.respons);
+        console.log(exp.response.data)  
         throw new Error("unhandled");
     }
 }
@@ -316,20 +316,22 @@ const exec = async() => {
     // ]
     // await addTx(1, team[0]._id, reduced, boxes, []);
     const txs = await getTxs(1, team[0]._id);
-    const tx = await getTx(2, txs[txs.length - 1]._id);
+    const tx = await getTx(2, txs[1]._id);
     // for(let index = 0; index < 3; index ++){
+    //     console.log('committing', index)
     //     await commitTx(index, tx._id);
     // }
     const commitResponse = await getCommitments(0, tx._id);
     console.log("========")
-    // console.log(JSON.stringify(commitResponse.commitments, undefined, 4))
+    console.log(JSON.stringify(commitResponse.commitments, undefined, 4))
     for(let index=0; index < 3; index ++){
-        console.log('handing', index)
+        console.log('handling', index)  
         const commitResponse = await getCommitments(index, tx._id);
         await addPartialProof(index, tx._id, commitResponse.commitments);
-        // await getReducedStatus(index, tx._id);
+        await getReducedStatus(index, tx._id);
     }
 }
 
 export default exec;
-exec()
+
+exec();
