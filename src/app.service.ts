@@ -33,7 +33,7 @@ export class AppService {
     }
   }
 
-  async getTeam(teamId: String) {
+  async getTeam(teamId: string) {
     return await this.teamModel.findOne({_id: teamId}).exec();
   }
 
@@ -55,7 +55,7 @@ export class AppService {
     return await newTeam.save();
   }
 
-  async addAuth(xpub: String, pub: String) {
+  async addAuth(xpub: string, pub: string) {
     const newAuth = new this.authModel({xpub: xpub, pub: pub});
     const authExists = await this.authModel.findOne({xpub: xpub, pub: pub}).exec();
     if (authExists) {
@@ -80,7 +80,7 @@ export class AppService {
     return false
   }
 
-  async addPartialProof(xpub: String, proof: String, reducedId: String) {
+  async addPartialProof(xpub: string, proof: string, reducedId: string) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     const partialProof = new this.partialProofModel({proof: proof, reduced: reduced, xpub: xpub});
     return await partialProof.save();
@@ -97,7 +97,7 @@ export class AppService {
     return await partialProof.save();
   }
   
-  async addCommitment(xpub: String, commitment: string, reducedId: string, simulated: boolean = false) {
+  async addCommitment(xpub: string, commitment: string, reducedId: string, simulated: boolean = false) {
     const reduced = await this.reducedModel.findOne({_id: reducedId }).exec();
     const commitmentObj = new this.commitmentModel({commitment: commitment, reduced: reduced, xpub: xpub, simulated: simulated});
     return await commitmentObj.save();
@@ -127,7 +127,7 @@ export class AppService {
     return await txObj.save();
   }
 
-  async getReduced(reducedId: String, populate: boolean = false): Promise<Reduced> {
+  async getReduced(reducedId: string, populate: boolean = false): Promise<Reduced> {
     if (populate) {
       return await this.reducedModel.findOne({_id: reducedId}).populate('team').populate('proposer').exec();
     }
@@ -138,28 +138,28 @@ export class AppService {
     return await this.TxModel.find({mined: false}).exec();
   }
 
-  async getReducedsByTeam(teamId: String) {
+  async getReducedsByTeam(teamId: string) {
     return await this.reducedModel.find({team: teamId}).exec();
   }
 
-  async getTeamByReducedId(reducedId: String) {
+  async getTeamByReducedId(reducedId: string) {
     const reduced = await this.reducedModel.findOne({_id: reducedId}).populate('team').exec();
     return reduced.team;
   }
 
-  async getPartialProofs(reducedId: String): Promise<PartialProof[]> {
+  async getPartialProofs(reducedId: string): Promise<PartialProof[]> {
     return await this.partialProofModel.find({reduced: reducedId}).exec();
   }
 
-  async getCommitments(reducedId: String) {
+  async getCommitments(reducedId: string) {
     return await this.commitmentModel.find({reduced: reducedId}).exec();
   }
 
-  async getTx(reducedId: String) {
+  async getTx(reducedId: string) {
     return await this.TxModel.findOne({reduced: reducedId}).exec();
   }
 
-  async authExists(xpub: String, pub: String) {
+  async authExists(xpub: string, pub: string) {
     const authExists = await this.authModel.findOne({xpub: xpub, pub: pub}).exec();
     if (authExists) {
       return true;
@@ -167,7 +167,7 @@ export class AppService {
     return false;
   }
 
-  async getAuth(xpub: String, pub: String) {
+  async getAuth(xpub: string, pub: string) {
     return await this.authModel.findOne({xpub: xpub, pub: pub}).exec();
   }
 
