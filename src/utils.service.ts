@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
-import * as ecc from 'tiny-secp256k1';
 import { BIP32Factory } from 'bip32';
-import { Address, ErgoBox, ErgoBoxes, NetworkAddress, NetworkPrefix, Propositions, ReducedTransaction, SecretKey, SecretKeys, TransactionHintsBag, Wallet, extract_hints, verify_signature, verify_tx_input_proof } from 'ergo-lib-wasm-nodejs';
-import { createHash } from 'crypto';
 import { mnemonicToSeedSync } from 'bip39';
-import { EncryptService } from './encryption.service';
+import { createHash } from 'crypto';
+import { Address, ErgoBox, ErgoBoxes, NetworkPrefix, Propositions, ReducedTransaction, SecretKey, SecretKeys, TransactionHintsBag, Wallet, extract_hints, verify_signature, verify_tx_input_proof } from 'ergo-lib-wasm-nodejs';
+import * as ecc from 'tiny-secp256k1';
 import { AppService } from './app.service';
 import { PartialProof } from './interfaces';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { NodeService } from './node.service';
 
 
@@ -19,6 +17,12 @@ export class UtilsService {
   private bip32 = BIP32Factory(ecc);
   private RootPathWithoutIndex = "m/44'/429'/0'/0";
 
+  /**
+   * Derive secret key from mnemonic
+   * @param mnemonic mnemonic
+   * @param index derivation index
+   * @returns SecretKey
+   */
   deriveSecretKeyFromMnemonic(mnemonic: string, index: number = 0): SecretKey {
     const seed = mnemonicToSeedSync(mnemonic);
     const master = this.bip32.fromSeed(seed);
@@ -26,6 +30,12 @@ export class UtilsService {
     return SecretKey.dlog_from_bytes(derived.privateKey);
   }
 
+  /**
+   * Derive address from xpub 
+   * @param xpub xpub
+   * @param index  derivation index
+   * @returns Address
+   */
   deriveAddressFromXPub(xpub: string, index: number = 0): Address {
     this.bip32.fromBase58(xpub);
     const derived = this.bip32.fromBase58(xpub).derive(index);
@@ -34,10 +44,22 @@ export class UtilsService {
     );
   }
 
+  /**
+   * Derive address from public key
+   * @param pub public key
+   * @returns Address
+   */
   pubToAddress(pub: Uint8Array): Address {
     return Address.from_public_key(pub);
   }
 
+  /**
+   * Verify signature
+   * @param addr address
+   * @param message message
+   * @param signature signature
+   * @returns boolean
+   */
   verifySignature(addr: Address, message: Uint8Array, signature: Uint8Array) {
     try {
       return verify_signature(addr, message, signature);
@@ -46,6 +68,12 @@ export class UtilsService {
     }
   }
 
+  /**
+   * Sign message
+   * @param mnemonic mnemonic
+   * @param message message
+   * @returns Uint8Array
+   */
   signMessage(mnemonic: string, message: Uint8Array): Uint8Array {
     // const wallet = Wallet.from_mnemonic(mnemonic, '');
     const secrets = new SecretKeys();
@@ -57,20 +85,42 @@ export class UtilsService {
   }
 
 
+  /**
+   * sha256 hash of data
+   * @param address address
+   * @param message message
+   * @param signature signature
+   * @returns boolean
+   */
   sha256(data: Uint8Array): Uint8Array {
     const hash = createHash('sha256');
     hash.update(data);
     return hash.digest(); 
   }
 
+  /**
+   * Convert bytes to base64
+   * @param bytes bytes
+   * @returns string
+   */
   bytesToBase64(bytes: Uint8Array): string {
     return Buffer.from(bytes).toString('base64');
   }
 
+  /**
+   * Convert base64 to bytes
+   * @param base64 base64
+   * @returns Uint8Array
+   */
   base64ToBytes(base64: string): Uint8Array {
     return new Uint8Array(Buffer.from(base64, 'base64'));
   }
 
+  /**
+   * Convert mnemonic to xpub
+   * @param mnemonic mnemonic
+   * @returns string
+   */
   mnemonicToXpub(mnemonic: string): string {
     const bip32 = BIP32Factory(ecc);
     const seed = mnemonicToSeedSync(mnemonic, '');
@@ -82,16 +132,32 @@ export class UtilsService {
     return xpubBase58;
   }
 
+  /**
+   * Convert xpub to address
+   * @param xpub xpub
+   * @returns Address
+   */
   xpubToAddress(xpub: string): Address {
     return this.deriveAddressFromXPub(xpub);
   }
 
+  /**
+   * Input length of reduced transaction 
+   * @param reducedId Reduced ID
+   * @returns number
+   */
   async getReducedInputLength(reducedId: string): Promise<number> {
     const reduced = await this.appService.getReduced(reducedId, true)
     const reducedTx = ReducedTransaction.sigma_parse_bytes(Buffer.from(reduced.reduced, "base64"))
     return reducedTx.unsigned_tx().inputs().len();
   }
 
+  /**
+   * Merge hints bags 
+   * @param reducedId Reduced ID
+   * @param bags Hints bags
+   * @returns TransactionHintsBag
+   */
   async mergeBags(reducedId: string, bags: string[]): Promise<TransactionHintsBag> {
     const merged = TransactionHintsBag.empty();
     const numInputs = await this.getReducedInputLength(reducedId);
@@ -104,34 +170,22 @@ export class UtilsService {
     return merged;
   }
 
+  
+  /**
+   * Get empty wallet
+   * @returns Wallet
+   */
   getEmptyWallet(): Wallet {
     return Wallet.from_secrets(new SecretKeys())
   }
 
-  getProofAddresses(proofs: any): string[] {
-    let proofAddresses = []
-    for (let i = 0; i < proofs.length; i++) {
-      const proof = proofs[i]
-      const proofJson = JSON.parse(proof)
-      const hintKeys = ['publicHints', 'secretHints']
-      hintKeys.forEach((key) => {
-        const publicHints = proofJson[key]
-        const keys = Object.keys(publicHints)
-        keys.forEach((key) => {
-          const keyLen = publicHints[key].length
-          for (let j = 0; j < keyLen; j++) {
-            const hint = publicHints[key][j]
-            const pubkey = hint['pubkey']['h']
-            const address = Address.from_public_key(Buffer.from(pubkey, "hex"))
-            proofAddresses.push(address.to_base58(NetworkPrefix.Mainnet))
-          }
-        })
-      })
-    }
-    const uniqueAddresses = [...new Set(proofAddresses)];
-    return uniqueAddresses
-  }
 
+  /**
+   * Simulate the reduced transaction
+   * @param reducedId Reduced ID
+   * @param save Whether to save the commitment
+   * @returns bags
+   */
   async getSimulationBag(reducedId: string, save: boolean = false): Promise<any> {
     const wallet = this.getEmptyWallet();
 
@@ -186,6 +240,13 @@ export class UtilsService {
     return bags;
   }
 
+  /**
+   * Check if the proof is valid
+   * @param reducedId Reduced ID
+   * @param hint Hint
+   * @param xpub xpub
+   * @returns boolean
+   */
   async isProofOkay(reducedId: string, hint: string, xpub: string): Promise<boolean> {
       const wallet = this.getEmptyWallet();
 
@@ -219,6 +280,12 @@ export class UtilsService {
       return true
   }
 
+  /**
+   * Sign the reduced transaction
+   * @param reducedId Reduced ID
+   * @param save Whether to save the transaction
+   * @returns signed transaction
+   */
   async signReduced(reducedId: string, save: boolean = false): Promise<any> {
     const wallet = this.getEmptyWallet();
 
@@ -266,25 +333,5 @@ export class UtilsService {
 
   }
 
-  @Cron('*/60 * * * * *')
-  async handleCron() {
-    const txs = await this.appService.getUnconfimrdTxs();
-    txs.forEach(async (tx: any) => {
-      const txJson = JSON.parse(tx.tx)
-      const txId = txJson['id']
-      const numConfs = await this.nodeService.getTxConfirmationNum(txId)
-      if (numConfs > 0) {
-        await this.appService.addOrUpdateTx(tx.tx, tx.reduced, '', true)
-      } else {
-        try {
-          const res = await this.nodeService.broadcastTx(txJson)
-
-        } catch (error) {
-          const res = error.response.data
-          await this.appService.addOrUpdateTx(tx.tx, tx.reduced, JSON.stringify(res), false)
-        }
-      }
-    })
-  }
 }
 

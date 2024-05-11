@@ -10,6 +10,12 @@ import { Auth } from './interfaces';
 export class EncryptService {
   constructor(private utilService: UtilsService, private appService: AppService) {}
 
+  /**
+   * signs a message with a private key 
+   * @param toSign Message to sign
+   * @param privateKey Private key to sign with
+   * @returns Signature
+   */
   sign(toSign: Uint8Array, privateKey: Buffer): string {
     const signature = sign("sha256", toSign, {
       key: Buffer.from(privateKey),
@@ -20,6 +26,13 @@ export class EncryptService {
     return signature.toString('base64');
   }
 
+  /**
+   * Verifies a signature with a public key 
+   * @param toVerify message to verify
+   * @param signature signature to verify
+   * @param publicKey public key to verify with
+   * @returns true if the signature is valid, false otherwise
+   */
   verify(toVerify: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): boolean {
     return verify(
       "sha256",
@@ -34,6 +47,9 @@ export class EncryptService {
   }
 
 
+  /**
+   * @returns a pair of public and private keys
+   */
   generateKeys() {
     const { publicKey, privateKey } = generateKeyPairSync('rsa', {
         modulusLength: 2048,
@@ -50,6 +66,12 @@ export class EncryptService {
     return { publicKey, privateKey };
   }
 
+  /**
+   * validates a user
+   * @param body sent by the user
+   * @param teamId team id to be associated with the user
+   * @returns the user if the user is valid
+   */
   async validUser(body: any, teamId: string = undefined): Promise<Auth> {
     try {
       const xpub = body.xpub;

@@ -7,13 +7,8 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(async () => {
     const allCollections = await mongoose.connection.db.listCollections().toArray();
     for (let i = 0; i < allCollections.length; i++) {
-      // drop the collection
       await mongoose.connection.dropCollection(allCollections[i].name);
     }
-    // await mongoose.connection.dropCollection('teams');
-    // await mongoose.connection.dropCollection('Auth');
-    // await mongoose.connection.dropCollection('commitment');
-    // await mongoose.connection.dropCollection('reduced');
     console.log('Collection dropped successfully.');
     process.exit(0);
   })

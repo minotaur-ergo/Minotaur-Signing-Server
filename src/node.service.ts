@@ -19,6 +19,9 @@ export class NodeService {
 
   }
 
+  /**
+   * @returns {ErgoStateContext} - The current state of the blockchain
+   */
   async getContext() {
     const res = await this.client.get('/blocks/lastHeaders/10');
     let headers = res.data;
@@ -30,11 +33,21 @@ export class NodeService {
     return new ErgoStateContext(preHeader, blockHeaders);
   }
 
+  /**
+   * broadcast a transaction to the blockchain
+   * @param tx transaction to be broadcasted
+   * @returns broadcasted result
+   */
   async broadcastTx(tx: Tx) {
     const res = await this.client.post('/transactions', tx);
     return res.data;
   }
 
+  /**
+   * Number of confirmations for a transaction
+   * @param txId transaction id
+   * @returns number of confirmations
+   */
   async getTxConfirmationNum(txId: string) {
     try {
       const res = await this.client.get(`/blockchain/transaction/byId/${txId}`);

@@ -9,6 +9,7 @@ import { UtilsService } from './utils.service';
 import { TestController } from './test.controller';
 import { NodeService } from './node.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { JobsService } from './jobs.service';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
   ],
   controllers: [AppController, TestController],
-  providers: [AppService, EncryptService, UtilsService, NodeService],
+  providers: [AppService, EncryptService, UtilsService, NodeService, JobsService],
 })
 export class AppModule {}
 
