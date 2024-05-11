@@ -10,6 +10,21 @@ import { TestController } from './test.controller';
 import { NodeService } from './node.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobsService } from './jobs.service';
+// import winston logger
+import {createLogger, format, transports, loggers} from 'winston';
+
+loggers.add('default', {
+  level: 'info',
+  format: format.combine(
+    format.timestamp(),
+    format.json(),
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: 'logs.log' }),
+  ],
+});
+
 
 @Module({
   imports: [

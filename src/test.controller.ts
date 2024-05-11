@@ -5,6 +5,9 @@ import { EncryptService } from './encryption.service';
 import { UtilsService } from './utils.service';
 import { NetworkPrefix } from 'ergo-lib-wasm-nodejs';
 import { ApiTags } from '@nestjs/swagger';
+import { loggers } from 'winston';
+
+const logger = loggers.get('default');
 
 @Controller()
 export class TestController {
@@ -103,6 +106,4 @@ export class TestController {
   async getAllTeams() {
     return await this.appService.getTeams();
   }
-
-
 }

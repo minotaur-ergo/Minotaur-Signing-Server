@@ -4,6 +4,9 @@ import { AddReducedTxDto, CreateTeamDto, SetPkDto, AddPartialProofDto, AddCommit
 import { EncryptService } from './encryption.service';
 import { UtilsService } from './utils.service';
 import { NodeService } from './node.service';
+import { loggers } from 'winston';
+
+const logger = loggers.get('default');
 
 @Controller()
 export class AppController {
