@@ -54,10 +54,12 @@ export class AppController {
     const commitments = await this.appService.getCommitments(body.reducedId)
 
     if (commitments.length < team.xpubs.length) {
-      throw new HttpException('Not enough commitments collected not simulated', 400);
+      logger.info(`Not enough commitments collected but trying to add proof by ${body.xpub} for reduced ${body.reducedId}`)
+      throw new HttpException('Not enough commitments collected or not simulated', 400);
     }
 
     if (!(await this.utilService.isProofOkay(body.reducedId, JSON.stringify(body.proof), body.xpub))) {
+      logger.info(`Invalid proof by ${body.xpub} for reduced ${body.reducedId}`)
       throw new HttpException('Invalid proof', 400);
     }
 
@@ -65,16 +67,20 @@ export class AppController {
     let proofs = await this.appService.getPartialProofs(body.reducedId)
     const proofXpubs = proofs.map((p) => p.xpub)
     if (proofXpubs.includes(body.xpub)) {
+      logger.info(`Proof already collected by ${body.xpub} for reduced ${body.reducedId}, updating it`)
       await this.appService.updatePartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
 
     } else if (proofs.length < team.m) {
+      logger.info(`Adding proof by ${body.xpub} for reduced ${body.reducedId}`)
       await this.appService.addPartialProof(body.xpub, JSON.stringify(body.proof), body.reducedId)
     }
 
     
     proofs = await this.appService.getPartialProofs(body.reducedId)
     if (proofs.length >= team.m) {
+      logger.info(`All proofs collected for reduced ${body.reducedId}, signing the tx`)
       const tx = await this.utilService.signReduced(body.reducedId, true)
+      logger.info(`Tx signed for reduced ${body.reducedId} - ${tx}`)
     }
 
     return {message: 'Success'};
@@ -88,18 +94,24 @@ export class AppController {
 
     const proofs = await this.appService.getPartialProofs(body.reducedId)
     if (proofs.length > 0) {
+      logger.info(`Proofs are being collected for reduced ${body.reducedId} but trying to add commitment by ${body.xpub}`)
       throw new HttpException('Proofs are being collected', 400);
     }
 
     let commitments = await this.appService.getCommitments(body.reducedId)
     const committedXpubs = commitments.map((c) => c.xpub)
     if (committedXpubs.includes(body.xpub)) {
+      logger.info(`Commitment already collected by ${body.xpub} for reduced ${body.reducedId}, updating it`)
       await this.appService.updateCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
+
     } else if (commitments.length < reduced.team.m) {
+      logger.info(`Adding commitment by ${body.xpub} for reduced ${body.reducedId}`)
       await this.appService.addCommitment(body.xpub, JSON.stringify(body.commitment), body.reducedId)
     }
+
     commitments = await this.appService.getCommitments(body.reducedId)
     if (commitments.length >= reduced.team.m) {
+      logger.info(`enough commitments collected for reduced ${body.reducedId}, simulating the tx`)
       await this.utilService.getSimulationBag(body.reducedId, true)
     }
     return {message: 'Success'};
@@ -145,6 +157,7 @@ export class AppController {
   async addTeam(@Body() body: CreateTeamDto) {
     const teamExists = await this.appService.teamExists(body.xpubs, body.m);
     if (teamExists) {
+      logger.info(`Team already exists but ${body.xpubs} trying to add it`)
       throw new HttpException('Team already exists', 400);
     }
 
@@ -170,6 +183,7 @@ export class AppController {
     const auth = await this.encryptService.validUser(body)
 
     if (!body.xpub) {
+      logger.info(`Invalid xpub ${body.xpub}`)
       throw new HttpException('Invalid', 400);
     }
     return await this.appService.getTeams(body.xpub);

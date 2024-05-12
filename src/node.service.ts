@@ -1,10 +1,10 @@
-import { Model } from 'mongoose';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Address, BlockHeader, BlockHeaders, ErgoStateContext, PreHeader, verify_signature } from 'ergo-lib-wasm-nodejs';
-import { UtilsService } from './utils.service';
-import { Reduced, Tx, PartialProof, Commitment, Auth, Team } from './interfaces';
+import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { BlockHeader, BlockHeaders, ErgoStateContext, PreHeader } from 'ergo-lib-wasm-nodejs';
+import { loggers } from 'winston';
+import { Tx } from './interfaces';
+
+const logger = loggers.get('default');
 
 @Injectable()
 export class NodeService {

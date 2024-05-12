@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
 import { EncryptService } from './encryption.service';
-import { AuthSchema, CommitmentSchema, PartiallProofSchema, ReducedSchema, TeamSchema, TxSchema } from './schema';
-import { UtilsService } from './utils.service';
-import { TestController } from './test.controller';
-import { NodeService } from './node.service';
-import { ScheduleModule } from '@nestjs/schedule';
 import { JobsService } from './jobs.service';
+import { NodeService } from './node.service';
+import { AuthSchema, CommitmentSchema, PartiallProofSchema, ReducedSchema, TeamSchema, TxSchema } from './schema';
+import { TestController } from './test.controller';
+import { UtilsService } from './utils.service';
 // import winston logger
-import {createLogger, format, transports, loggers} from 'winston';
+import { format, loggers, transports } from 'winston';
 
 loggers.add('default', {
   level: 'info',

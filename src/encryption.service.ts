@@ -5,6 +5,9 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { AppService } from './app.service';
 import { Auth } from './interfaces';
+import { loggers } from 'winston';
+
+const logger = loggers.get('default');
 
 @Injectable()
 export class EncryptService {
@@ -80,13 +83,14 @@ export class EncryptService {
       const auth = await this.appService.getAuth(xpub, pub);
       const authExists = auth
       if (!authExists) {
-        console.log('Unauthorized not exists');
+        logger.error(`Unauthorized - user does not exist ${xpub}, ${pub}`);
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
 
       if (teamId) {
         const team = await this.appService.getTeam(teamId);
         if (team.xpubs.indexOf(xpub) === -1) {
+          logger.error(`Unauthorized - user is not in team ${xpub}, ${pub}, ${teamId}`);
           throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
       }

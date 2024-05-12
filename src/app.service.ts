@@ -1,10 +1,11 @@
-import { Model } from 'mongoose';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Address, BlockHeader, BlockHeaders, ErgoStateContext, PreHeader, verify_signature } from 'ergo-lib-wasm-nodejs';
-import { UtilsService } from './utils.service';
-import { Reduced, Tx, PartialProof, Commitment, Auth, Team } from './interfaces';
 import axios from 'axios';
+import { Model } from 'mongoose';
+import { loggers } from 'winston';
+import { Auth, Commitment, PartialProof, Reduced, Team, Tx } from './interfaces';
+
+const logger = loggers.get('default');
 
 @Injectable()
 export class AppService {
@@ -152,6 +153,7 @@ export class AppService {
   async updatePartialProof(xpub: string, proof: string, reducedId: string) {
     const tx = await this.getTx(reducedId);
     if (tx && !tx.error) {
+      logger.error(`Transaction ${reducedId} is already signed but ${xpub} tried to update a partial proof`);
       throw new HttpException('Transaction is already signed', HttpStatus.BAD_REQUEST);
     }
 

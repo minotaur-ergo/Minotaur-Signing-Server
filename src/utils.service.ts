@@ -8,6 +8,9 @@ import * as ecc from 'tiny-secp256k1';
 import { AppService } from './app.service';
 import { PartialProof } from './interfaces';
 import { NodeService } from './node.service';
+import { loggers } from 'winston';
+
+const logger = loggers.get('default');
 
 
 @Injectable()
@@ -265,17 +268,22 @@ export class UtilsService {
       const commitmentJs = JSON.parse(relevantCommitment.commitment)
       let pk = null
       const signed = new Propositions();
-      for (let i = 0; i < inputNum; i++) {
-        const hintA = hintJson['publicHints'][i.toString()][0]['a']
-        const hintH = hintJson['secretHints'][i.toString()][0]['pubkey']['h']
+      try {
+        for (let i = 0; i < inputNum; i++) {
+          const hintA = hintJson['publicHints'][i.toString()][0]['a']
+          const hintH = hintJson['secretHints'][i.toString()][0]['pubkey']['h']
 
-        const commitmentA = commitmentJs['publicHints'][i.toString()][0]['a']
-        const commitmentH = commitmentJs['publicHints'][i.toString()][0]['pubkey']['h']
-        pk = commitmentH
+          const commitmentA = commitmentJs['publicHints'][i.toString()][0]['a']
+          const commitmentH = commitmentJs['publicHints'][i.toString()][0]['pubkey']['h']
+          pk = commitmentH
 
-        if (hintA !== commitmentA || hintH !== commitmentH) {
-          return false
+          if (hintA !== commitmentA || hintH !== commitmentH) {
+            return false
+          }
         }
+      } catch (error) {
+        logger.error(error)
+        return false
       }
       return true
   }
@@ -316,9 +324,9 @@ export class UtilsService {
       const context = await this.nodeService.getContext();
 
       for (let i = 0; i < inputNum; i++) {
-        console.log(i, verify_tx_input_proof(i, context, tx, boxes, ErgoBoxes.empty()))
         if (!verify_tx_input_proof(i, context, tx, boxes, ErgoBoxes.empty())) {
           message = 'Proof verification failed for input ' + i.toString()
+          logger.error(message, {reducedId: reducedId})
         }
       }
 
