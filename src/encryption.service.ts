@@ -1,17 +1,11 @@
-import {
-  publicEncrypt,
-  generateKeyPairSync,
-  sign,
-  verify,
-  constants,
-} from 'crypto'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import { UtilsService } from './utils.service'
-import { Model } from 'mongoose'
-import { InjectModel } from '@nestjs/mongoose'
+import { blake2b } from 'blakejs'
+// import * as secp from "@noble/secp256k1";
+import { loggers } from 'winston'
 import { AppService } from './app.service'
 import { Auth } from './interfaces'
-import { loggers } from 'winston'
+import { UtilsService } from './utils.service'
+import * as secp from 'secp256k1'
 
 const logger = loggers.get('default')
 
@@ -21,22 +15,6 @@ export class EncryptService {
     private utilService: UtilsService,
     private appService: AppService,
   ) {}
-
-  /**
-   * signs a message with a private key
-   * @param toSign Message to sign
-   * @param privateKey Private key to sign with
-   * @returns Signature
-   */
-  sign(toSign: Uint8Array, privateKey: Buffer): string {
-    const signature = sign('sha256', toSign, {
-      key: Buffer.from(privateKey),
-      format: 'der',
-      type: 'pkcs1',
-      padding: constants.RSA_PKCS1_PSS_PADDING,
-    })
-    return signature.toString('base64')
-  }
 
   /**
    * Verifies a signature with a public key
@@ -50,36 +28,8 @@ export class EncryptService {
     signature: Uint8Array,
     publicKey: Uint8Array,
   ): boolean {
-    return verify(
-      'sha256',
-      Buffer.from(toVerify),
-      {
-        key: Buffer.from(publicKey),
-        format: 'der',
-        type: 'pkcs1',
-        padding: constants.RSA_PKCS1_PSS_PADDING,
-      },
-      signature,
-    )
-  }
-
-  /**
-   * @returns a pair of public and private keys
-   */
-  generateKeys() {
-    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: {
-        type: 'pkcs1',
-        format: 'der',
-      },
-      privateKeyEncoding: {
-        type: 'pkcs1',
-        format: 'der',
-      },
-    })
-
-    return { publicKey, privateKey }
+    const msgHex = blake2b(toVerify, undefined, 32)
+    return secp.ecdsaVerify(signature, msgHex, publicKey)
   }
 
   /**
@@ -94,8 +44,7 @@ export class EncryptService {
       const pub = body.pub
       const signature = body.signature
       const auth = await this.appService.getAuth(xpub, pub)
-      const authExists = auth
-      if (!authExists) {
+      if (!auth) {
         logger.error(`Unauthorized - user does not exist ${xpub}, ${pub}`)
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED)
       }

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Res,
-  Body,
-  HttpException,
-  Param,
-  Query,
-} from '@nestjs/common'
+import { Controller, Post, Body, HttpException } from '@nestjs/common'
 import { AppService } from './app.service'
 import {
   AddReducedTxDto,
@@ -20,6 +11,7 @@ import {
   getTxDto,
   getTeamsDto,
   getReducedStatusDto,
+  DelPkDto,
 } from './dto'
 import { EncryptService } from './encryption.service'
 import { UtilsService } from './utils.service'
@@ -54,6 +46,15 @@ export class AppController {
     throw new HttpException('Invalid', 400)
   }
 
+  @Post('/delPk')
+  async delPk(@Body() body: DelPkDto) {
+    await this.encryptService.validUser(body)
+    const pub = body.pub
+    const xpub = body.xpub
+    await this.appService.delAuth(xpub, pub)
+    return { message: 'Success' }
+  }
+
   @Post('/addReducedTx')
   async addReducedTx(@Body() body: AddReducedTxDto) {
     await this.encryptService.validUser(body)
@@ -81,7 +82,7 @@ export class AppController {
   @Post('/addPartialProof')
   async addPartialProof(@Body() body: AddPartialProofDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    await this.encryptService.validUser(body, reduced.team._id)
 
     const team = await this.appService.getTeamByReducedId(body.reducedId)
 
@@ -143,7 +144,7 @@ export class AppController {
   @Post('/addCommitment')
   async addCommitment(@Body() body: AddCommitmentDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    await this.encryptService.validUser(body, reduced.team._id)
 
     const proofs = await this.appService.getPartialProofs(body.reducedId)
     if (proofs.length > 0) {
@@ -188,7 +189,7 @@ export class AppController {
   @Post('/getCommitments')
   async getCommitments(@Body() body: getCommitmentsDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    await this.encryptService.validUser(body, reduced.team._id)
 
     const commitments = await this.appService.getCommitments(body.reducedId)
     const bag = await this.utilService.mergeBags(
@@ -197,76 +198,97 @@ export class AppController {
     )
     const bagXpubs = commitments.map((c) => c.xpub)
     const team = await this.appService.getTeamByReducedId(body.reducedId)
+    const proofs = await this.appService.getPartialProofs(body.reducedId)
+    const proofXpubs = proofs.map((p) => p.xpub)
     const result = {
       commitments: bag.to_json(),
       collected: commitments.length,
       enoughCollected: commitments.length >= team.m,
       committedXpubs: bagXpubs,
       userCommitted: bagXpubs.includes(body.xpub),
+      provers: proofXpubs,
     }
     return result
   }
 
   @Post('/getReducedTxs')
   async getReducedTxs(@Body() body: getReducedTxsDto) {
-    const auth = await this.encryptService.validUser(body, body.teamId)
+    await this.encryptService.validUser(body, body.teamId)
 
     const reduced = await this.appService.getReducedsByTeam(body.teamId)
-    return reduced
+    const ids: Array<string> = reduced.map((item) => item.id)
+    const commitments: Array<string> = (
+      await this.appService.getAllCommitments(ids)
+    ).map((item) => item.reduced)
+    const proofs = (await this.appService.getAllPartialProofs(ids)).map(
+      (item) => item.reduced,
+    )
+    return reduced.map((item) => ({
+      id: item.id,
+      reduced: item.reduced,
+      boxes: item.boxes,
+      dataInputs: item.dataInputs,
+      maxDerived: item.maxDerived,
+      proposer: item.proposer,
+      committed: commitments.filter((reduced) => reduced === item.reduced)
+        .length,
+    }))
   }
 
   @Post('/getTx')
   async getTx(@Body() body: getTxDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    await this.encryptService.validUser(body, reduced.team._id)
 
     return reduced
   }
 
   @Post('/addTeam')
   async addTeam(@Body() body: CreateTeamDto) {
+    await this.encryptService.validUser(body)
     const teamExists = await this.appService.teamExists(body.xpubs, body.m)
     if (teamExists) {
       logger.info(`Team already exists but ${body.xpubs} trying to add it`)
       throw new HttpException('Team already exists', 400)
     }
-
-    const xpub = body.xpub
-    const address = this.utilService.deriveAddressFromXPub(xpub)
-
-    const bodyWithoutSignature = { ...body }
-    delete bodyWithoutSignature.signature
-    const bodyBytes = Buffer.from(JSON.stringify(bodyWithoutSignature), 'utf-8')
-
-    const signature = body.signature
-    const sigBytes = this.utilService.base64ToBytes(signature)
-    const isValid = this.utilService.verifySignature(
-      address,
-      bodyBytes,
-      sigBytes,
+    const address = await this.utilService.deriveMultiSigWalletAddress(
+      body.xpubs,
+      body.m,
     )
-    if (isValid) {
-      const team = await this.appService.addTeam(body)
-      return team
-    }
-    throw new HttpException('Invalid', 400)
+    return await this.appService.addTeam(body, address)
   }
 
   @Post('/getTeams')
   async getMyTeams(@Body() body: getTeamsDto) {
-    const auth = await this.encryptService.validUser(body)
+    await this.encryptService.validUser(body)
 
     if (!body.xpub) {
       logger.info(`Invalid xpub ${body.xpub}`)
       throw new HttpException('Invalid', 400)
     }
-    return await this.appService.getTeams(body.xpub)
+    const res = await this.appService.getTeams(body.xpub)
+    const xpubs = res
+      .map((team) => team.xpubs)
+      .reduce((acc, xpub) => [...acc, ...xpub], [])
+    const existXPubs = (await this.appService.authExists(xpubs)).map(
+      (item) => item.xpub,
+    )
+    return res.map((item) => ({
+      name: item.name,
+      m: item.m,
+      address: item.address,
+      id: item.id,
+      xpubs: item.xpubs.map((xpub) => ({
+        xpub,
+        registered: existXPubs.includes(xpub),
+      })),
+    }))
   }
 
   @Post('/getReducedStatus')
   async getReducedStatus(@Body() body: getReducedStatusDto) {
     const reduced = await this.appService.getReduced(body.reducedId, true)
-    const auth = await this.encryptService.validUser(body, reduced.team._id)
+    await this.encryptService.validUser(body, reduced.team._id)
 
     let commitments = await this.appService.getCommitments(body.reducedId)
     commitments = commitments.filter((c) => !c.simulated)

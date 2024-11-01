@@ -13,6 +13,7 @@ export const TeamSchema = new mongoose.Schema(
     name: { type: String, required: true },
     xpubs: [{ type: String, required: true }],
     m: { type: Number, required: true },
+    address: { type: String, required: true },
   },
   { versionKey: false, timestamps: true },
 )

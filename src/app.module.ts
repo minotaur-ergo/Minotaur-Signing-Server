@@ -15,7 +15,6 @@ import {
   TeamSchema,
   TxSchema,
 } from './schema'
-import { TestController } from './test.controller'
 import { UtilsService } from './utils.service'
 // import winston logger
 import { format, loggers, transports } from 'winston'
@@ -43,7 +42,7 @@ loggers.add('default', {
       { name: 'Reduced', schema: ReducedSchema },
     ]),
   ],
-  controllers: [AppController, TestController],
+  controllers: [AppController],
   providers: [
     AppService,
     EncryptService,

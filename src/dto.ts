@@ -19,6 +19,25 @@ export class SetPkDto {
   signature: string
 }
 
+export class DelPkDto {
+  @ApiProperty({ description: 'Public key', example: 'examplePubKey' })
+  pub: string
+
+  @ApiProperty({
+    description: 'Extended public key',
+    example:
+      'xpub6Ezg8dc85qRafaHRUqPSvZk6dbQtu4fuJ1cWP8hQAsB9Km9G58EjEi5Cro7kM4RxAeixkUhiUwifN4jPw9by4Z41oXkXAe1aTKYgBFujMMH',
+  })
+  xpub: string
+
+  @ApiProperty({
+    description: 'signature of pub using address 0 of wallet',
+    example:
+      'fwYB5LsUGFNe41hvAGIulsMWDcOTg5gMq7kSULrzJEv7QgbIxFifunia/oBkWZqWHoZaGzw99NGGP3iBl38JFSd/+7xgrqVLB1Gl7CZZeCDwUsm3XyB3lPMHZHDxywiZZIq9ZT32UXNYdCu/ogFoN8zM5DGNOfSyBCUz0z4HV/xX2VGG8x04goJKU5afvDGLvFsqebEvldl+YnUAnYue9yL50Uv+vJ2gcZZMuzychQ+BVNCoh2f9OIvacl5UzsDwhqwg7zTqeN/IKsMEQG2KLWNL0BvIh1GdU0LhyoYCRA7n2xfzs8qhejRAwpkkbxtTyjKnX1oPCfRdL/Y6TZivaA==',
+  })
+  signature: string
+}
+
 export class CreateTeamDto {
   @ApiProperty({ description: 'Team name', example: 'exampleTeamName' })
   name: string

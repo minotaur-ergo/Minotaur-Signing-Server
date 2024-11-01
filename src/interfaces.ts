@@ -6,6 +6,7 @@ export interface Auth extends mongoose.Document {
 }
 
 export interface Team extends mongoose.Document {
+  address: string
   name: string
   xpubs: string[]
   m: number

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import axios from 'axios'
 import { Model } from 'mongoose'
 import { loggers } from 'winston'
+import { CreateTeamDto } from './dto'
 import { Auth, Commitment, PartialProof, Reduced, Team, Tx } from './interfaces'
 
 const logger = loggers.get('default')
@@ -43,10 +44,16 @@ export class AppService {
   /**
    * Adds a new team to the database.
    * @param {any} team - The team to add.
+   * @param address
    * @returns {Promise} - A promise that resolves to the saved team.
    */
-  async addTeam(team: any) {
-    const newTeam = new this.teamModel(team)
+  async addTeam(team: CreateTeamDto, address: string) {
+    const newTeam = new this.teamModel({
+      address: address,
+      xpubs: team.xpubs,
+      m: team.m,
+      name: team.name,
+    })
     return await newTeam.save()
   }
 
@@ -91,6 +98,10 @@ export class AppService {
       return authExists
     }
     return await newAuth.save()
+  }
+
+  async delAuth(xpub: string, pub: string) {
+    return await this.authModel.deleteOne({ xpub: xpub, pub: pub }).exec()
   }
 
   /**
@@ -324,6 +335,18 @@ export class AppService {
     return await this.partialProofModel.find({ reduced: reducedId }).exec()
   }
 
+  async getAllPartialProofs(
+    reducedIds: Array<string>,
+  ): Promise<PartialProof[]> {
+    return await this.partialProofModel
+      .find({
+        reduced: {
+          $in: reducedIds,
+        },
+      })
+      .exec()
+  }
+
   /**
    * Commitments for a reduced tx.
    * @param reducedId Reduced tx id
@@ -331,6 +354,17 @@ export class AppService {
    */
   async getCommitments(reducedId: string) {
     return await this.commitmentModel.find({ reduced: reducedId }).exec()
+  }
+
+  async getAllCommitments(reducedIds: Array<string>) {
+    return await this.commitmentModel
+      .find({
+        reduced: {
+          $in: reducedIds,
+        },
+        simulated: false,
+      })
+      .exec()
   }
 
   /**
@@ -343,19 +377,18 @@ export class AppService {
   }
 
   /**
-   * True if the authentification exists.
+   * True if the authentifications exists.
    * @param xpub xpub of the user
-   * @param pub public key of the user
-   * @returns boolean
+   * @returns available auth
    */
-  async authExists(xpub: string, pub: string) {
-    const authExists = await this.authModel
-      .findOne({ xpub: xpub, pub: pub })
+  async authExists(xpub: Array<string>) {
+    return await this.authModel
+      .find({
+        xpub: {
+          $in: xpub,
+        },
+      })
       .exec()
-    if (authExists) {
-      return true
-    }
-    return false
   }
 
   /**

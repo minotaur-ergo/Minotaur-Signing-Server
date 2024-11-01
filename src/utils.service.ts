@@ -7,22 +7,23 @@ import {
   Address,
   ErgoBox,
   ErgoBoxes,
+  ErgoTree,
+  extract_hints,
   NetworkPrefix,
   Propositions,
   ReducedTransaction,
   SecretKey,
   SecretKeys,
   TransactionHintsBag,
-  Wallet,
-  extract_hints,
   verify_signature,
   verify_tx_input_proof,
+  Wallet,
 } from 'ergo-lib-wasm-nodejs'
 import * as ecc from 'tiny-secp256k1'
+import { loggers } from 'winston'
 import { AppService } from './app.service'
 import { PartialProof } from './interfaces'
 import { NodeService } from './node.service'
-import { loggers } from 'winston'
 
 const logger = loggers.get('default')
 
@@ -83,6 +84,61 @@ export class UtilsService {
     } catch (error) {
       return false
     }
+  }
+
+  int8Vlq = (value: number) => {
+    const sign = value > 0 ? 0 : 1
+    value = (value << 1) + sign
+    return this.uInt8Vlq(value)
+  }
+
+  uInt8Vlq = (value: number) => {
+    const res = []
+    while (value > 0) {
+      if ((value & ~0x7f) === 0) {
+        res.push(value)
+        break
+      } else {
+        res.push((value & 0x7f) | 0x80)
+        value = value >> 7
+      }
+    }
+    return Buffer.from(Uint8Array.from(res)).toString('hex')
+  }
+
+  generateMultiSigAddressFromPublicKeys = (
+    publicKeys: Array<string>,
+    minSign: number,
+    prefix: NetworkPrefix,
+  ) => {
+    let ergoTree = '10' + this.uInt8Vlq(publicKeys.length + 1)
+    ergoTree += '04' + this.int8Vlq(minSign)
+    publicKeys.sort().forEach((item) => (ergoTree += '08cd' + item))
+    ergoTree += '987300'
+    ergoTree += `83${this.uInt8Vlq(publicKeys.length)}08` // add coll operation
+    publicKeys.forEach(
+      (item, index) => (ergoTree += '73' + this.uInt8Vlq(index + 1)),
+    )
+    return Address.recreate_from_ergo_tree(
+      ErgoTree.from_base16_bytes(ergoTree),
+    ).to_base58(prefix)
+  }
+
+  deriveMultiSigWalletAddress = async (
+    xPubs: Array<string>,
+    requiredSign: number,
+    index: number = 0,
+  ) => {
+    const pub_keys = xPubs.map((key) => {
+      const pub = this.bip32.fromBase58(key)
+      const derived1 = pub.derive(index)
+      return derived1.publicKey.toString('hex')
+    })
+    return this.generateMultiSigAddressFromPublicKeys(
+      pub_keys,
+      requiredSign,
+      NetworkPrefix.Testnet,
+    )
   }
 
   /**
